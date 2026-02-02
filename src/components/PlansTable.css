@@ -1,0 +1,28 @@
+/* Sticky header styles for PlansTable */
+.plans-table-container {
+  max-height: calc(100vh - 300px);
+  overflow: auto;
+}
+
+.plans-table-container thead {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background-color: hsl(var(--card));
+}
+
+.plans-table-container thead th {
+  background-color: hsl(var(--card));
+}
+
+.plans-table-container tbody td:first-child,
+.plans-table-container thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: hsl(var(--card));
+}
+
+.plans-table-container thead th:first-child {
+  z-index: 40;
+}
