@@ -161,10 +161,26 @@ const PlansTable = () => {
         };
       })
     );
+
+    // Scroll to the new plan column after DOM updates
+    setTimeout(() => {
+      const planHeader = document.querySelector(`[data-plan-id="${planId}"]`);
+      if (planHeader) {
+        planHeader.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }, 100);
   };
 
   const handleCreateFeature = (newFeature: Feature) => {
     setFeatures([...features, newFeature]);
+
+    // Scroll to the new feature row after DOM updates
+    setTimeout(() => {
+      const featureRow = document.querySelector(`[data-feature-id="${newFeature.id}"]`);
+      if (featureRow) {
+        featureRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   const handleExport = async () => {
@@ -350,6 +366,7 @@ const PlansTable = () => {
                 {visiblePlans.map((plan) => (
                   <TableHead
                     key={plan.id}
+                    data-plan-id={plan.id}
                     colSpan={subColumns.length}
                     className={cn(
                       "text-center py-4 border-r border-border last:border-r-0 sticky top-0 bg-card table-header-bg",
@@ -392,6 +409,7 @@ const PlansTable = () => {
               {filteredFeatures.map((feature) => (
                 <TableRow
                   key={feature.id}
+                  data-feature-id={feature.id}
                   className="table-row-hover transition-colors duration-150"
                 >
                   <TableCell className="py-3 pl-6 border-r border-border sticky left-0 z-10 bg-card">

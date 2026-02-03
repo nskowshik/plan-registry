@@ -170,7 +170,7 @@ export const AddFeatureDialog = ({
                 value={newFeatureName}
                 onChange={(e) => {
                   setNewFeatureName(e.target.value);
-                  setNewFeatureId(e.target.value.toUpperCase().replace(/\s+/g, "_"));
+                  setNewFeatureId(e.target.value.toUpperCase().replace(/[^A-Z0-9]+/g, "_"));
                 }}
                 className="w-full"
               />
