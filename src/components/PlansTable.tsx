@@ -48,7 +48,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import html2canvas from "html2canvas";
-import { exportFeaturesToJSON } from "./PlansTable/utils/exportUtils";
+import { exportFeaturesToJSON, exportSmartJSON } from "./PlansTable/utils/exportUtils";
 
 const createEmptyFeature = (id: string): Feature => ({
   id,
@@ -168,7 +168,7 @@ const PlansTable = () => {
   };
 
   const handleExport = async () => {
-    await exportFeaturesToJSON(features, visiblePlans);
+    await exportSmartJSON(features, visiblePlans, changedFeatures, newlyAddedPlans);
   };
 
   const handleImport = async (files: FileList) => {
