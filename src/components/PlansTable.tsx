@@ -7,7 +7,9 @@ import {
   Feature,
 } from "@/data/plansData";
 import { AddFeatureDialog } from "./AddFeatureDialog";
+import { AddPlanDialog } from "./AddPlanDialog";
 import { ChangeLogsDialog } from "./PlansTable/components/ChangeLogsDialog";
+import { Toolbar } from "./PlansTable/components/Toolbar";
 import { useChangeTracking } from "./PlansTable/hooks/useChangeTracking";
 import {
   Table,
@@ -54,6 +56,8 @@ const createEmptyFeature = (id: string): Feature => ({
 });
 
 const PlansTable = () => {
+  const [localPlans, setLocalPlans] = useState(plans);
+  const [newlyAddedPlans, setNewlyAddedPlans] = useState<string[]>([]);
   const [features, setFeatures] = useState<Feature[]>(initialFeatures);
   const [originalFeatures] = useState<Feature[]>(initialFeatures);
   const [editingName, setEditingName] = useState<string | null>(null);
@@ -64,8 +68,10 @@ const PlansTable = () => {
     useState<boolean>(false);
   const [showAddFeatureDialog, setShowAddFeatureDialog] =
     useState<boolean>(false);
+  const [showAddPlanDialog, setShowAddPlanDialog] =
+    useState<boolean>(false);
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
-    plans.reduce((acc, plan) => {
+    localPlans.reduce((acc, plan) => {
       const isNFR =
         plan.name.toLowerCase().includes("nfr") ||
         plan.id.toLowerCase().includes("not-for-resale");
@@ -78,9 +84,9 @@ const PlansTable = () => {
   // Use change tracking hook
   const { changedFeatures } = useChangeTracking(features, originalFeatures);
 
-  const visiblePlans = plans.filter((plan) => visibleColumns[plan.id]);
+  const visiblePlans = localPlans.filter((plan) => visibleColumns[plan.id]);
 
-  const filteredPlansForConfig = plans.filter((plan) =>
+  const filteredPlansForConfig = localPlans.filter((plan) =>
     plan.name.toLowerCase().includes(columnSearchQuery.toLowerCase()),
   );
 
@@ -89,14 +95,71 @@ const PlansTable = () => {
   };
 
   const toggleAllColumns = () => {
-    const allVisible = plans.every((plan) => visibleColumns[plan.id]);
+    const allVisible = localPlans.every((plan) => visibleColumns[plan.id]);
     setVisibleColumns(
-      plans.reduce((acc, plan) => ({ ...acc, [plan.id]: !allVisible }), {}),
+      localPlans.reduce((acc, plan) => ({ ...acc, [plan.id]: !allVisible }), {}),
     );
   };
 
   const handleAddRow = () => {
     setShowAddFeatureDialog(true);
+  };
+
+  const handleAddPlan = () => {
+    setShowAddPlanDialog(true);
+  };
+
+  const handleCreatePlan = (planId: string, planName: string, isPopular: boolean, isActive: boolean, cloneFromPlanId?: string) => {
+    // Create new plan object
+    const newPlan = {
+      id: planId,
+      name: planName,
+      isPopular,
+      isActive,
+    };
+
+    // Add to local plans array
+    setLocalPlans([...localPlans, newPlan]);
+    
+    // Track as newly added plan
+    setNewlyAddedPlans([...newlyAddedPlans, planId]);
+
+    // Add to visible columns (show by default if active)
+    setVisibleColumns((prev) => ({
+      ...prev,
+      [planId]: isActive,
+    }));
+
+    // Update all features to include the new plan
+    setFeatures((prevFeatures) =>
+      prevFeatures.map((feature) => {
+        // If cloning from an existing plan, copy its values
+        if (cloneFromPlanId && feature.plans[cloneFromPlanId]) {
+          return {
+            ...feature,
+            plans: {
+              ...feature.plans,
+              [planId]: { ...feature.plans[cloneFromPlanId] },
+            },
+          };
+        }
+        
+        // Otherwise, use default empty values
+        return {
+          ...feature,
+          plans: {
+            ...feature.plans,
+            [planId]: {
+              canEnabled: false,
+              canEnabledWithFlag: false,
+              canEnabledInTrial: false,
+              upsellPlanId: null,
+              upsellAddonId: null,
+            },
+          },
+        };
+      })
+    );
   };
 
   const handleCreateFeature = (newFeature: Feature) => {
@@ -143,130 +206,21 @@ const PlansTable = () => {
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex gap-2">
-        <Button
-          onClick={() => setIsEditMode(!isEditMode)}
-          variant={isEditMode ? "default" : "outline"}
-          className="hover:bg-primary/90 transition-colors"
-        >
-          {isEditMode ? (
-            <>
-              <Eye className="h-4 w-4 mr-2" />
-              Read Mode
-            </>
-          ) : (
-            <>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Mode
-            </>
-          )}
-        </Button>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="transition-colors"
-            >
-              <Settings2 className="h-4 w-4 mr-2" />
-              Configure Columns
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="start">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium text-sm">Visible Columns</h4>
-                <p className="text-xs text-muted-foreground">
-                  Select which plan columns to display
-                </p>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search plans..."
-                  value={columnSearchQuery}
-                  onChange={(e) => setColumnSearchQuery(e.target.value)}
-                  className="h-9 pl-8 text-sm"
-                />
-              </div>
-              <div className="flex items-center space-x-2 pb-2 border-b">
-                <Checkbox
-                  id="toggle-all"
-                  checked={plans.every((plan) => visibleColumns[plan.id])}
-                  onCheckedChange={toggleAllColumns}
-                />
-                <label
-                  htmlFor="toggle-all"
-                  className="text-sm font-medium cursor-pointer"
-                >
-                  Toggle All
-                </label>
-              </div>
-              <div className="max-h-[300px] overflow-y-auto space-y-2">
-                {filteredPlansForConfig.map((plan) => (
-                  <div key={plan.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={plan.id}
-                      checked={visibleColumns[plan.id]}
-                      onCheckedChange={() => toggleColumn(plan.id)}
-                    />
-                    <label
-                      htmlFor={plan.id}
-                      className="text-sm cursor-pointer flex-1"
-                    >
-                      {plan.name}
-                      {plan.isPopular && (
-                        <Badge className="ml-2 bg-primary text-primary-foreground text-xs">
-                          ✔
-                        </Badge>
-                      )}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-        {isEditMode && (
-          <Button
-            onClick={handleAddRow}
-            variant="outline"
-            className="hover:bg-primary transition-colors"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Feature Row
-          </Button>
-        )}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button
-                  onClick={handleExport}
-                  variant="outline"
-                  className="transition-colors"
-                  disabled={Object.keys(changedFeatures).length === 0}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export JSON
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {Object.keys(changedFeatures).length === 0 && (
-              <TooltipContent>
-                <p>No changes to export</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-        <Button
-          onClick={changeLogs}
-          variant="outline"
-          className="transition-colors"
-        >
-          ✍️ Change log
-        </Button>
-      </div>
+      <Toolbar
+        isEditMode={isEditMode}
+        onToggleEditMode={() => setIsEditMode(!isEditMode)}
+        plans={localPlans}
+        visibleColumns={visibleColumns}
+        onToggleColumn={toggleColumn}
+        onToggleAllColumns={toggleAllColumns}
+        columnSearchQuery={columnSearchQuery}
+        onColumnSearchChange={setColumnSearchQuery}
+        onAddFeature={handleAddRow}
+        onAddPlan={handleAddPlan}
+        onExport={handleExport}
+        onChangeLogs={changeLogs}
+        changedFeaturesCount={Object.keys(changedFeatures).length + newlyAddedPlans.length}
+      />
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="max-h-[calc(100vh-300px)] overflow-auto">
           <Table ref={tableRef} className="relative">
@@ -421,6 +375,7 @@ const PlansTable = () => {
         open={showAddFeatureDialog}
         onOpenChange={setShowAddFeatureDialog}
         features={features}
+        plans={localPlans}
         onCreateFeature={handleCreateFeature}
       />
 
@@ -429,6 +384,16 @@ const PlansTable = () => {
         open={showChangeLogsDialog}
         onOpenChange={setShowChangeLogsDialog}
         changedFeatures={changedFeatures}
+        newlyAddedPlans={newlyAddedPlans}
+        allPlans={localPlans}
+        features={features}
+      />
+
+      {/* Add Plan Dialog */}
+      <AddPlanDialog
+        open={showAddPlanDialog}
+        onOpenChange={setShowAddPlanDialog}
+        onCreatePlan={handleCreatePlan}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { plans, Feature } from "@/data/plansData";
+import { Plan, Feature } from "@/data/plansData";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ interface AddFeatureDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   features: Feature[];
+  plans: Plan[];
   onCreateFeature: (feature: Feature) => void;
 }
 
@@ -24,9 +25,11 @@ export const AddFeatureDialog = ({
   open,
   onOpenChange,
   features,
+  plans,
   onCreateFeature,
 }: AddFeatureDialogProps) => {
   const [newFeatureName, setNewFeatureName] = useState<string>("");
+  const [newFeatureId,setNewFeatureId] = useState<string>("");
   const [copyFromFeatureId, setCopyFromFeatureId] = useState<string>("");
   const [canEnabledPlans, setCanEnabledPlans] = useState<Set<string>>(
     new Set(),
@@ -165,9 +168,17 @@ export const AddFeatureDialog = ({
                 id="feature-name"
                 placeholder="Enter feature name..."
                 value={newFeatureName}
-                onChange={(e) => setNewFeatureName(e.target.value)}
+                onChange={(e) => {
+                  setNewFeatureName(e.target.value);
+                  setNewFeatureId(e.target.value.toUpperCase().replace(/\s+/g, "_"));
+                }}
                 className="w-full"
               />
+              {newFeatureId.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  Feature ID: <span className="font-mono font-semibold text-foreground">{newFeatureId}</span>
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
