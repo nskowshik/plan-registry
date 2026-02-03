@@ -31,4 +31,9 @@ export interface ChangedFeature {
     planName: string;
     changes: Record<string, { old: any; new: any }>;
   }>;
+  planData?: Record<string, {
+    planId: string;
+    planName: string;
+    data: Record<string, any>;
+  }>;
 }

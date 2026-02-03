@@ -6,8 +6,11 @@ import {
   createDefaultPlanValues,
   Feature,
 } from "@/data/plansData";
+import JSZip from "jszip";
 import { AddFeatureDialog } from "./AddFeatureDialog";
+import { AddPlanDialog } from "./AddPlanDialog";
 import { ChangeLogsDialog } from "./PlansTable/components/ChangeLogsDialog";
+import { Toolbar } from "./PlansTable/components/Toolbar";
 import { useChangeTracking } from "./PlansTable/hooks/useChangeTracking";
 import {
   Table,
@@ -44,13 +47,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import html2canvas from "html2canvas";
 import { exportFeaturesToJSON } from "./PlansTable/utils/exportUtils";
 
@@ -61,6 +57,8 @@ const createEmptyFeature = (id: string): Feature => ({
 });
 
 const PlansTable = () => {
+  const [localPlans, setLocalPlans] = useState(plans);
+  const [newlyAddedPlans, setNewlyAddedPlans] = useState<string[]>([]);
   const [features, setFeatures] = useState<Feature[]>(initialFeatures);
   const [originalFeatures] = useState<Feature[]>(initialFeatures);
   const [editingName, setEditingName] = useState<string | null>(null);
@@ -71,37 +69,10 @@ const PlansTable = () => {
     useState<boolean>(false);
   const [showAddFeatureDialog, setShowAddFeatureDialog] =
     useState<boolean>(false);
-  const [newFeatureName, setNewFeatureName] = useState<string>("");
-  const [copyFromFeatureId, setCopyFromFeatureId] = useState<string>("");
-  // Per-plan selections for each category
-  const [canEnabledPlans, setCanEnabledPlans] = useState<Set<string>>(
-    new Set(),
-  );
-  const [canEnabledWithFlagPlans, setCanEnabledWithFlagPlans] = useState<
-    Set<string>
-  >(new Set());
-  const [canEnabledInTrialPlans, setCanEnabledInTrialPlans] = useState<
-    Set<string>
-  >(new Set());
-  // Upsell fields: name (text) + selected plans (Set)
-  const [upsellPlanName, setUpsellPlanName] = useState<string>("");
-  const [upsellPlanSelectedPlans, setUpsellPlanSelectedPlans] = useState<
-    Set<string>
-  >(new Set());
-  const [upsellAddonName, setUpsellAddonName] = useState<string>("");
-  const [upsellAddonSelectedPlans, setUpsellAddonSelectedPlans] = useState<
-    Set<string>
-  >(new Set());
-  // Search states for dropdowns
-  const [canEnabledSearch, setCanEnabledSearch] = useState<string>("");
-  const [canEnabledWithFlagSearch, setCanEnabledWithFlagSearch] =
-    useState<string>("");
-  const [canEnabledInTrialSearch, setCanEnabledInTrialSearch] =
-    useState<string>("");
-  const [upsellPlanSearch, setUpsellPlanSearch] = useState<string>("");
-  const [upsellAddonSearch, setUpsellAddonSearch] = useState<string>("");
+  const [showAddPlanDialog, setShowAddPlanDialog] =
+    useState<boolean>(false);
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
-    plans.reduce((acc, plan) => {
+    localPlans.reduce((acc, plan) => {
       const isNFR =
         plan.name.toLowerCase().includes("nfr") ||
         plan.id.toLowerCase().includes("not-for-resale");
@@ -114,9 +85,9 @@ const PlansTable = () => {
   // Use change tracking hook
   const { changedFeatures } = useChangeTracking(features, originalFeatures);
 
-  const visiblePlans = plans.filter((plan) => visibleColumns[plan.id]);
+  const visiblePlans = localPlans.filter((plan) => visibleColumns[plan.id]);
 
-  const filteredPlansForConfig = plans.filter((plan) =>
+  const filteredPlansForConfig = localPlans.filter((plan) =>
     plan.name.toLowerCase().includes(columnSearchQuery.toLowerCase()),
   );
 
@@ -125,9 +96,9 @@ const PlansTable = () => {
   };
 
   const toggleAllColumns = () => {
-    const allVisible = plans.every((plan) => visibleColumns[plan.id]);
+    const allVisible = localPlans.every((plan) => visibleColumns[plan.id]);
     setVisibleColumns(
-      plans.reduce((acc, plan) => ({ ...acc, [plan.id]: !allVisible }), {}),
+      localPlans.reduce((acc, plan) => ({ ...acc, [plan.id]: !allVisible }), {}),
     );
   };
 
@@ -135,104 +106,167 @@ const PlansTable = () => {
     setShowAddFeatureDialog(true);
   };
 
-  const handleCopyFromFeature = (featureId: string) => {
-    setCopyFromFeatureId(featureId);
-    if (!featureId) {
-      // Reset all selections
-      setCanEnabledPlans(new Set());
-      setCanEnabledWithFlagPlans(new Set());
-      setCanEnabledInTrialPlans(new Set());
-      setUpsellPlanName("");
-      setUpsellPlanSelectedPlans(new Set());
-      setUpsellAddonName("");
-      setUpsellAddonSelectedPlans(new Set());
-      return;
-    }
-
-    const sourceFeature = features.find((f) => f.id === featureId);
-    if (!sourceFeature) return;
-
-    // Populate Sets based on which plans have each property enabled
-    const canEnabledSet = new Set<string>();
-    const canEnabledWithFlagSet = new Set<string>();
-    const canEnabledInTrialSet = new Set<string>();
-    const upsellPlanPlansSet = new Set<string>();
-    const upsellAddonPlansSet = new Set<string>();
-    let upsellPlanIdValue = "";
-    let upsellAddonIdValue = "";
-
-    plans.forEach((plan) => {
-      const planData = sourceFeature.plans[plan.id];
-      if (planData?.canEnabled) {
-        canEnabledSet.add(plan.id);
-      }
-      if (planData?.canEnabledWithFlag) {
-        canEnabledWithFlagSet.add(plan.id);
-      }
-      if (planData?.canEnabledInTrial) {
-        canEnabledInTrialSet.add(plan.id);
-      }
-      if (planData?.upsellPlanId) {
-        upsellPlanIdValue = planData.upsellPlanId;
-        upsellPlanPlansSet.add(plan.id);
-      }
-      if (planData?.upsellAddonId) {
-        upsellAddonIdValue = planData.upsellAddonId;
-        upsellAddonPlansSet.add(plan.id);
-      }
-    });
-
-    setCanEnabledPlans(canEnabledSet);
-    setCanEnabledWithFlagPlans(canEnabledWithFlagSet);
-    setCanEnabledInTrialPlans(canEnabledInTrialSet);
-    setUpsellPlanName(upsellPlanIdValue);
-    setUpsellPlanSelectedPlans(upsellPlanPlansSet);
-    setUpsellAddonName(upsellAddonIdValue);
-    setUpsellAddonSelectedPlans(upsellAddonPlansSet);
+  const handleAddPlan = () => {
+    setShowAddPlanDialog(true);
   };
 
-  const handleCreateFeature = () => {
-    if (!newFeatureName.trim()) return;
-
-    const newId = `feature-${Date.now()}`;
-
-    const newFeature: Feature = {
-      id: newId,
-      name: newFeatureName.trim(),
-      plans: plans.reduce(
-        (acc, plan) => {
-          acc[plan.id] = {
-            canEnabled: canEnabledPlans.has(plan.id),
-            canEnabledWithFlag: canEnabledWithFlagPlans.has(plan.id),
-            canEnabledInTrial: canEnabledInTrialPlans.has(plan.id),
-            upsellPlanId: upsellPlanSelectedPlans.has(plan.id)
-              ? upsellPlanName
-              : null,
-            upsellAddonId: upsellAddonSelectedPlans.has(plan.id)
-              ? upsellAddonName
-              : null,
-          };
-          return acc;
-        },
-        {} as Record<string, any>,
-      ),
+  const handleCreatePlan = (planId: string, planName: string, isPopular: boolean, isActive: boolean, cloneFromPlanId?: string) => {
+    // Create new plan object
+    const newPlan = {
+      id: planId,
+      name: planName,
+      isPopular,
+      isActive,
     };
 
+    // Add to local plans array
+    setLocalPlans([...localPlans, newPlan]);
+    
+    // Track as newly added plan
+    setNewlyAddedPlans([...newlyAddedPlans, planId]);
+
+    // Add to visible columns (show by default if active)
+    setVisibleColumns((prev) => ({
+      ...prev,
+      [planId]: isActive,
+    }));
+
+    // Update all features to include the new plan
+    setFeatures((prevFeatures) =>
+      prevFeatures.map((feature) => {
+        // If cloning from an existing plan, copy its values
+        if (cloneFromPlanId && feature.plans[cloneFromPlanId]) {
+          return {
+            ...feature,
+            plans: {
+              ...feature.plans,
+              [planId]: { ...feature.plans[cloneFromPlanId] },
+            },
+          };
+        }
+        
+        // Otherwise, use default empty values
+        return {
+          ...feature,
+          plans: {
+            ...feature.plans,
+            [planId]: {
+              canEnabled: false,
+              canEnabledWithFlag: false,
+              canEnabledInTrial: false,
+              upsellPlanId: null,
+              upsellAddonId: null,
+            },
+          },
+        };
+      })
+    );
+  };
+
+  const handleCreateFeature = (newFeature: Feature) => {
     setFeatures([...features, newFeature]);
-    setShowAddFeatureDialog(false);
-    setNewFeatureName("");
-    setCopyFromFeatureId("");
-    setCanEnabledPlans(new Set());
-    setCanEnabledWithFlagPlans(new Set());
-    setCanEnabledInTrialPlans(new Set());
-    setUpsellPlanName("");
-    setUpsellPlanSelectedPlans(new Set());
-    setUpsellAddonName("");
-    setUpsellAddonSelectedPlans(new Set());
   };
 
   const handleExport = async () => {
     await exportFeaturesToJSON(features, visiblePlans);
+  };
+
+  const handleImport = async (files: FileList) => {
+    try {
+      const importedPlansData: Record<string, any> = {};
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file.name.endsWith('.zip')) {
+          // Handle zip file
+          const zip = new JSZip();
+          const zipContent = await zip.loadAsync(file);
+          
+          // Extract all JSON files from zip
+          for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
+            if (filename.endsWith('.json') && !zipEntry.dir) {
+              const content = await zipEntry.async('string');
+              const planId = filename.replace('.json', '');
+              importedPlansData[planId] = JSON.parse(content);
+            }
+          }
+        } else if (file.name.endsWith('.json')) {
+          // Handle individual JSON file
+          const content = await file.text();
+          const planId = file.name.replace('.json', '');
+          importedPlansData[planId] = JSON.parse(content);
+        }
+      }
+      
+      // Create plans array from imported data
+      const importedPlans = Object.keys(importedPlansData).map((planId) => {
+        // Format plan name from ID (e.g., "starter" -> "Starter", "premium-2024" -> "Premium 2024")
+        const planName = planId
+          .split('-')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        
+        return {
+          id: planId,
+          name: planName,
+          isPopular: false,
+          isActive: true,
+        };
+      });
+      
+      // Process imported data and rebuild features
+      const allFeatureKeys = new Set<string>();
+      Object.values(importedPlansData).forEach((planData) => {
+        Object.keys(planData).forEach((key) => allFeatureKeys.add(key));
+      });
+      
+      // Create new features array
+      const newFeatures: Feature[] = Array.from(allFeatureKeys).map((featureKey) => {
+        const featureName = featureKey
+          .split('_')
+          .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+          .join(' ');
+        
+        const plans: Record<string, any> = {};
+        Object.entries(importedPlansData).forEach(([planId, planData]) => {
+          plans[planId] = planData[featureKey] || {
+            canEnabled: false,
+            canEnabledWithFlag: false,
+            canEnabledInTrial: false,
+            upsellPlanId: null,
+            upsellAddonId: null,
+          };
+        });
+        
+        return {
+          id: featureKey.toLowerCase(),
+          name: featureName,
+          plans,
+        };
+      });
+      
+      // Update plans state
+      setLocalPlans(importedPlans);
+      
+      // Update visible columns to show all imported plans
+      const newVisibleColumns: Record<string, boolean> = {};
+      importedPlans.forEach((plan) => {
+        newVisibleColumns[plan.id] = true;
+      });
+      setVisibleColumns(newVisibleColumns);
+      
+      // Update features state
+      setFeatures(newFeatures);
+      
+      // Reset newly added plans since we're importing fresh data
+      setNewlyAddedPlans([]);
+      
+      alert(`Successfully imported ${Object.keys(importedPlansData).length} plan(s) with ${newFeatures.length} feature(s)`);
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Failed to import files. Please ensure they are valid JSON files.');
+    }
   };
 
   const handleFeatureNameChange = (featureId: string, name: string) => {
@@ -271,130 +305,22 @@ const PlansTable = () => {
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex gap-2">
-        <Button
-          onClick={() => setIsEditMode(!isEditMode)}
-          variant={isEditMode ? "default" : "outline"}
-          className="hover:bg-primary/90 transition-colors"
-        >
-          {isEditMode ? (
-            <>
-              <Eye className="h-4 w-4 mr-2" />
-              Read Mode
-            </>
-          ) : (
-            <>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Mode
-            </>
-          )}
-        </Button>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="transition-colors"
-            >
-              <Settings2 className="h-4 w-4 mr-2" />
-              Configure Columns
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="start">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium text-sm">Visible Columns</h4>
-                <p className="text-xs text-muted-foreground">
-                  Select which plan columns to display
-                </p>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search plans..."
-                  value={columnSearchQuery}
-                  onChange={(e) => setColumnSearchQuery(e.target.value)}
-                  className="h-9 pl-8 text-sm"
-                />
-              </div>
-              <div className="flex items-center space-x-2 pb-2 border-b">
-                <Checkbox
-                  id="toggle-all"
-                  checked={plans.every((plan) => visibleColumns[plan.id])}
-                  onCheckedChange={toggleAllColumns}
-                />
-                <label
-                  htmlFor="toggle-all"
-                  className="text-sm font-medium cursor-pointer"
-                >
-                  Toggle All
-                </label>
-              </div>
-              <div className="max-h-[300px] overflow-y-auto space-y-2">
-                {filteredPlansForConfig.map((plan) => (
-                  <div key={plan.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={plan.id}
-                      checked={visibleColumns[plan.id]}
-                      onCheckedChange={() => toggleColumn(plan.id)}
-                    />
-                    <label
-                      htmlFor={plan.id}
-                      className="text-sm cursor-pointer flex-1"
-                    >
-                      {plan.name}
-                      {plan.isPopular && (
-                        <Badge className="ml-2 bg-primary text-primary-foreground text-xs">
-                          ✔
-                        </Badge>
-                      )}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-        {isEditMode && (
-          <Button
-            onClick={handleAddRow}
-            variant="outline"
-            className="hover:bg-primary transition-colors"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Feature Row
-          </Button>
-        )}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button
-                  onClick={handleExport}
-                  variant="outline"
-                  className="transition-colors"
-                  disabled={Object.keys(changedFeatures).length === 0}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export JSON
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {Object.keys(changedFeatures).length === 0 && (
-              <TooltipContent>
-                <p>No changes to export</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-        <Button
-          onClick={changeLogs}
-          variant="outline"
-          className="transition-colors"
-        >
-          ✍️ Change log
-        </Button>
-      </div>
+      <Toolbar
+        isEditMode={isEditMode}
+        onToggleEditMode={() => setIsEditMode(!isEditMode)}
+        plans={localPlans}
+        visibleColumns={visibleColumns}
+        onToggleColumn={toggleColumn}
+        onToggleAllColumns={toggleAllColumns}
+        columnSearchQuery={columnSearchQuery}
+        onColumnSearchChange={setColumnSearchQuery}
+        onAddFeature={handleAddRow}
+        onAddPlan={handleAddPlan}
+        onExport={handleExport}
+        onImport={handleImport}
+        onChangeLogs={changeLogs}
+        changedFeaturesCount={Object.keys(changedFeatures).length + newlyAddedPlans.length}
+      />
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="max-h-[calc(100vh-300px)] overflow-auto">
           <Table ref={tableRef} className="relative">
@@ -545,421 +471,29 @@ const PlansTable = () => {
       </div>
 
       {/* Add Feature Dialog */}
-      <Dialog
+      <AddFeatureDialog
         open={showAddFeatureDialog}
         onOpenChange={setShowAddFeatureDialog}
-      >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add New Feature</DialogTitle>
-            <DialogDescription>
-              Enter the feature details and set default values for all plans
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="feature-name" className="text-sm font-medium">
-                Feature Name
-              </label>
-              <Input
-                id="feature-name"
-                placeholder="Enter feature name..."
-                value={newFeatureName}
-                onChange={(e) => setNewFeatureName(e.target.value)}
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="copy-from" className="text-sm font-medium">
-                Copy From Existing Feature (Optional)
-              </label>
-              <select
-                id="copy-from"
-                value={copyFromFeatureId}
-                onChange={(e) => handleCopyFromFeature(e.target.value)}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-              >
-                <option value="">-- Select a feature to copy --</option>
-                {features.map((feature) => (
-                  <option key={feature.id} value={feature.id}>
-                    {feature.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-sm font-medium block mb-2">
-                Select Plans for Each Category
-              </label>
-              <div className="space-y-4 border rounded-lg p-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Can Enabled
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        <span className="truncate">
-                          {canEnabledPlans.size === 0
-                            ? "Select plans..."
-                            : `${canEnabledPlans.size} plan(s) selected`}
-                        </span>
-                        <Settings2 className="ml-2 h-4 w-4 shrink-0" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-2">
-                        <Input
-                          placeholder="Search plans..."
-                          className="mb-2"
-                          value={canEnabledSearch}
-                          onChange={(e) => setCanEnabledSearch(e.target.value)}
-                        />
-                        <div className="max-h-60 overflow-y-auto">
-                          {plans
-                            .filter((plan) =>
-                              plan.name
-                                .toLowerCase()
-                                .includes(canEnabledSearch.toLowerCase()),
-                            )
-                            .map((plan) => (
-                              <div
-                                key={plan.id}
-                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                                onClick={() => {
-                                  const newSet = new Set(canEnabledPlans);
-                                  if (newSet.has(plan.id)) {
-                                    newSet.delete(plan.id);
-                                  } else {
-                                    newSet.add(plan.id);
-                                  }
-                                  setCanEnabledPlans(newSet);
-                                }}
-                              >
-                                <Checkbox
-                                  checked={canEnabledPlans.has(plan.id)}
-                                  onCheckedChange={() => {}}
-                                />
-                                <span className="text-sm">{plan.name}</span>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Can Enabled With Flag
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        <span className="truncate">
-                          {canEnabledWithFlagPlans.size === 0
-                            ? "Select plans..."
-                            : `${canEnabledWithFlagPlans.size} plan(s) selected`}
-                        </span>
-                        <Settings2 className="ml-2 h-4 w-4 shrink-0" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-2">
-                        <Input
-                          placeholder="Search plans..."
-                          className="mb-2"
-                          value={canEnabledWithFlagSearch}
-                          onChange={(e) =>
-                            setCanEnabledWithFlagSearch(e.target.value)
-                          }
-                        />
-                        <div className="max-h-60 overflow-y-auto">
-                          {plans
-                            .filter((plan) =>
-                              plan.name
-                                .toLowerCase()
-                                .includes(
-                                  canEnabledWithFlagSearch.toLowerCase(),
-                                ),
-                            )
-                            .map((plan) => (
-                              <div
-                                key={plan.id}
-                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                                onClick={() => {
-                                  const newSet = new Set(
-                                    canEnabledWithFlagPlans,
-                                  );
-                                  if (newSet.has(plan.id)) {
-                                    newSet.delete(plan.id);
-                                  } else {
-                                    newSet.add(plan.id);
-                                  }
-                                  setCanEnabledWithFlagPlans(newSet);
-                                }}
-                              >
-                                <Checkbox
-                                  checked={canEnabledWithFlagPlans.has(plan.id)}
-                                  onCheckedChange={() => {}}
-                                />
-                                <span className="text-sm">{plan.name}</span>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Can Enabled In Trial
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        <span className="truncate">
-                          {canEnabledInTrialPlans.size === 0
-                            ? "Select plans..."
-                            : `${canEnabledInTrialPlans.size} plan(s) selected`}
-                        </span>
-                        <Settings2 className="ml-2 h-4 w-4 shrink-0" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-2">
-                        <Input
-                          placeholder="Search plans..."
-                          className="mb-2"
-                          value={canEnabledInTrialSearch}
-                          onChange={(e) =>
-                            setCanEnabledInTrialSearch(e.target.value)
-                          }
-                        />
-                        <div className="max-h-60 overflow-y-auto">
-                          {plans
-                            .filter((plan) =>
-                              plan.name
-                                .toLowerCase()
-                                .includes(
-                                  canEnabledInTrialSearch.toLowerCase(),
-                                ),
-                            )
-                            .map((plan) => (
-                              <div
-                                key={plan.id}
-                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                                onClick={() => {
-                                  const newSet = new Set(
-                                    canEnabledInTrialPlans,
-                                  );
-                                  if (newSet.has(plan.id)) {
-                                    newSet.delete(plan.id);
-                                  } else {
-                                    newSet.add(plan.id);
-                                  }
-                                  setCanEnabledInTrialPlans(newSet);
-                                }}
-                              >
-                                <Checkbox
-                                  checked={canEnabledInTrialPlans.has(plan.id)}
-                                  onCheckedChange={() => {}}
-                                />
-                                <span className="text-sm">{plan.name}</span>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <label className="text-sm font-medium mb-2 block">
-                    Upsell Plan
-                  </label>
-                  <Input
-                    placeholder="Enter upsell plan name..."
-                    value={upsellPlanName}
-                    onChange={(e) => setUpsellPlanName(e.target.value)}
-                    className="mb-2"
-                  />
-                  <label className="text-sm font-medium mb-2 block">
-                    Select Plans for Upsell Plan
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        <span className="truncate">
-                          {upsellPlanSelectedPlans.size === 0
-                            ? "Select plans..."
-                            : `${upsellPlanSelectedPlans.size} plan(s) selected`}
-                        </span>
-                        <Settings2 className="ml-2 h-4 w-4 shrink-0" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-2">
-                        <Input
-                          placeholder="Search plans..."
-                          className="mb-2"
-                          value={upsellPlanSearch}
-                          onChange={(e) => setUpsellPlanSearch(e.target.value)}
-                        />
-                        <div className="max-h-60 overflow-y-auto">
-                          {plans
-                            .filter((plan) =>
-                              plan.name
-                                .toLowerCase()
-                                .includes(upsellPlanSearch.toLowerCase()),
-                            )
-                            .map((plan) => (
-                              <div
-                                key={plan.id}
-                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                                onClick={() => {
-                                  const newSet = new Set(
-                                    upsellPlanSelectedPlans,
-                                  );
-                                  if (newSet.has(plan.id)) {
-                                    newSet.delete(plan.id);
-                                  } else {
-                                    newSet.add(plan.id);
-                                  }
-                                  setUpsellPlanSelectedPlans(newSet);
-                                }}
-                              >
-                                <Checkbox
-                                  checked={upsellPlanSelectedPlans.has(plan.id)}
-                                  onCheckedChange={() => {}}
-                                />
-                                <span className="text-sm">{plan.name}</span>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium mb-2 block">
-                    Upsell Addon
-                  </label>
-                  <Input
-                    placeholder="Enter upsell addon name..."
-                    value={upsellAddonName}
-                    onChange={(e) => setUpsellAddonName(e.target.value)}
-                    className="mb-2"
-                  />
-                  <label className="text-sm font-medium mb-2 block">
-                    Select Plans for Upsell Addon
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        <span className="truncate">
-                          {upsellAddonSelectedPlans.size === 0
-                            ? "Select plans..."
-                            : `${upsellAddonSelectedPlans.size} plan(s) selected`}
-                        </span>
-                        <Settings2 className="ml-2 h-4 w-4 shrink-0" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-2">
-                        <Input
-                          placeholder="Search plans..."
-                          className="mb-2"
-                          value={upsellAddonSearch}
-                          onChange={(e) => setUpsellAddonSearch(e.target.value)}
-                        />
-                        <div className="max-h-60 overflow-y-auto">
-                          {plans
-                            .filter((plan) =>
-                              plan.name
-                                .toLowerCase()
-                                .includes(upsellAddonSearch.toLowerCase()),
-                            )
-                            .map((plan) => (
-                              <div
-                                key={plan.id}
-                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                                onClick={() => {
-                                  const newSet = new Set(
-                                    upsellAddonSelectedPlans,
-                                  );
-                                  if (newSet.has(plan.id)) {
-                                    newSet.delete(plan.id);
-                                  } else {
-                                    newSet.add(plan.id);
-                                  }
-                                  setUpsellAddonSelectedPlans(newSet);
-                                }}
-                              >
-                                <Checkbox
-                                  checked={upsellAddonSelectedPlans.has(
-                                    plan.id,
-                                  )}
-                                  onCheckedChange={() => {}}
-                                />
-                                <span className="text-sm">{plan.name}</span>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAddFeatureDialog(false);
-                setNewFeatureName("");
-                setCopyFromFeatureId("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateFeature}
-              disabled={!newFeatureName.trim()}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Feature
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        features={features}
+        plans={localPlans}
+        onCreateFeature={handleCreateFeature}
+      />
 
       {/* Change Logs Dialog */}
       <ChangeLogsDialog
         open={showChangeLogsDialog}
         onOpenChange={setShowChangeLogsDialog}
         changedFeatures={changedFeatures}
+        newlyAddedPlans={newlyAddedPlans}
+        allPlans={localPlans}
+        features={features}
+      />
+
+      {/* Add Plan Dialog */}
+      <AddPlanDialog
+        open={showAddPlanDialog}
+        onOpenChange={setShowAddPlanDialog}
+        onCreatePlan={handleCreatePlan}
       />
     </div>
   );

@@ -17,7 +17,30 @@ export const useChangeTracking = (
       const original = originalMap.get(feature.id);
 
       if (!original) {
-        changes[feature.name] = { status: "NEW" };
+        const planChanges: Record<string, any> = {};
+        plans.forEach((plan) => {
+          const newPlan = feature.plans[plan.id];
+          const planData: Record<string, any> = {};
+          
+          if (newPlan?.canEnabled) planData.canEnabled = newPlan.canEnabled;
+          if (newPlan?.canEnabledWithFlag) planData.canEnabledWithFlag = newPlan.canEnabledWithFlag;
+          if (newPlan?.canEnabledInTrial) planData.canEnabledInTrial = newPlan.canEnabledInTrial;
+          if (newPlan?.upsellPlanId) planData.upsellPlanId = newPlan.upsellPlanId;
+          if (newPlan?.upsellAddonId) planData.upsellAddonId = newPlan.upsellAddonId;
+          
+          if (Object.keys(planData).length > 0) {
+            planChanges[plan.id] = {
+              planId: plan.id,
+              planName: plan.name,
+              data: planData,
+            };
+          }
+        });
+        
+        changes[feature.name] = { 
+          status: "NEW",
+          planData: planChanges,
+        };
       } else if (original.name !== feature.name) {
         const planChanges: Record<string, any> = {};
         plans.forEach((plan) => {

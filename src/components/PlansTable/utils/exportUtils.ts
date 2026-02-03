@@ -19,7 +19,7 @@ export const exportFeaturesToJSON = async (features: Feature[], visiblePlans: Pl
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `gating-json-${new Date().toString()}.zip`;
+  a.download = `gating-json-${new Date().toISOString()}.zip`;
   a.click();
   URL.revokeObjectURL(url);
 };
