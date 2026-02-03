@@ -6,6 +6,7 @@ import {
   createDefaultPlanValues,
   Feature,
 } from "@/data/plansData";
+import JSZip from "jszip";
 import { AddFeatureDialog } from "./AddFeatureDialog";
 import { AddPlanDialog } from "./AddPlanDialog";
 import { ChangeLogsDialog } from "./PlansTable/components/ChangeLogsDialog";
@@ -170,6 +171,104 @@ const PlansTable = () => {
     await exportFeaturesToJSON(features, visiblePlans);
   };
 
+  const handleImport = async (files: FileList) => {
+    try {
+      const importedPlansData: Record<string, any> = {};
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file.name.endsWith('.zip')) {
+          // Handle zip file
+          const zip = new JSZip();
+          const zipContent = await zip.loadAsync(file);
+          
+          // Extract all JSON files from zip
+          for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
+            if (filename.endsWith('.json') && !zipEntry.dir) {
+              const content = await zipEntry.async('string');
+              const planId = filename.replace('.json', '');
+              importedPlansData[planId] = JSON.parse(content);
+            }
+          }
+        } else if (file.name.endsWith('.json')) {
+          // Handle individual JSON file
+          const content = await file.text();
+          const planId = file.name.replace('.json', '');
+          importedPlansData[planId] = JSON.parse(content);
+        }
+      }
+      
+      // Create plans array from imported data
+      const importedPlans = Object.keys(importedPlansData).map((planId) => {
+        // Format plan name from ID (e.g., "starter" -> "Starter", "premium-2024" -> "Premium 2024")
+        const planName = planId
+          .split('-')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        
+        return {
+          id: planId,
+          name: planName,
+          isPopular: false,
+          isActive: true,
+        };
+      });
+      
+      // Process imported data and rebuild features
+      const allFeatureKeys = new Set<string>();
+      Object.values(importedPlansData).forEach((planData) => {
+        Object.keys(planData).forEach((key) => allFeatureKeys.add(key));
+      });
+      
+      // Create new features array
+      const newFeatures: Feature[] = Array.from(allFeatureKeys).map((featureKey) => {
+        const featureName = featureKey
+          .split('_')
+          .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+          .join(' ');
+        
+        const plans: Record<string, any> = {};
+        Object.entries(importedPlansData).forEach(([planId, planData]) => {
+          plans[planId] = planData[featureKey] || {
+            canEnabled: false,
+            canEnabledWithFlag: false,
+            canEnabledInTrial: false,
+            upsellPlanId: null,
+            upsellAddonId: null,
+          };
+        });
+        
+        return {
+          id: featureKey.toLowerCase(),
+          name: featureName,
+          plans,
+        };
+      });
+      
+      // Update plans state
+      setLocalPlans(importedPlans);
+      
+      // Update visible columns to show all imported plans
+      const newVisibleColumns: Record<string, boolean> = {};
+      importedPlans.forEach((plan) => {
+        newVisibleColumns[plan.id] = true;
+      });
+      setVisibleColumns(newVisibleColumns);
+      
+      // Update features state
+      setFeatures(newFeatures);
+      
+      // Reset newly added plans since we're importing fresh data
+      setNewlyAddedPlans([]);
+      
+      alert(`Successfully imported ${Object.keys(importedPlansData).length} plan(s) with ${newFeatures.length} feature(s)`);
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Failed to import files. Please ensure they are valid JSON files.');
+    }
+  };
+
   const handleFeatureNameChange = (featureId: string, name: string) => {
     setFeatures(features.map((f) => (f.id === featureId ? { ...f, name } : f)));
   };
@@ -218,6 +317,7 @@ const PlansTable = () => {
         onAddFeature={handleAddRow}
         onAddPlan={handleAddPlan}
         onExport={handleExport}
+        onImport={handleImport}
         onChangeLogs={changeLogs}
         changedFeaturesCount={Object.keys(changedFeatures).length + newlyAddedPlans.length}
       />

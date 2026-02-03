@@ -17,9 +17,10 @@ import {
 import {
   Plus,
   Download,
+  Upload,
   Search,
   Edit,
-  Eye,
+  Save,
   Settings2,
   Columns,
 } from "lucide-react";
@@ -36,6 +37,7 @@ interface ToolbarProps {
   onAddFeature: () => void;
   onAddPlan: () => void;
   onExport: () => void;
+  onImport: (files: FileList) => void;
   onChangeLogs: () => void;
   changedFeaturesCount: number;
 }
@@ -52,6 +54,7 @@ export const Toolbar = ({
   onAddFeature,
   onAddPlan,
   onExport,
+  onImport,
   onChangeLogs,
   changedFeaturesCount,
 }: ToolbarProps) => {
@@ -68,12 +71,12 @@ export const Toolbar = ({
       >
         {isEditMode ? (
           <>
-            <Eye className="h-4 w-4 mr-2" />
-            Read Mode
+            <Save className="h-4 w-4" />
+            Save
           </>
         ) : (
           <>
-            <Edit className="h-4 w-4 mr-2" />
+            <Edit className="h-4 w-4" />
             Edit Mode
           </>
         )}
@@ -81,7 +84,7 @@ export const Toolbar = ({
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className="transition-colors">
-            <Settings2 className="h-4 w-4 mr-2" />
+            <Settings2 className="h-4 w-4" />
             Configure Columns
           </Button>
         </PopoverTrigger>
@@ -147,7 +150,7 @@ export const Toolbar = ({
           variant="outline"
           className="hover:bg-primary transition-colors"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 " />
           Add Feature Row
         </Button>
       )}
@@ -157,7 +160,7 @@ export const Toolbar = ({
           variant="outline"
           className="hover:bg-primary transition-colors"
         >
-          <Columns className="h-4 w-4 mr-2" />
+          <Columns className="h-4 w-4 " />
           Add Plan
         </Button>
       )}
@@ -171,7 +174,7 @@ export const Toolbar = ({
                 className="transition-colors"
                 disabled={changedFeaturesCount === 0}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 " />
                 Export JSON
               </Button>
             </span>
@@ -183,6 +186,27 @@ export const Toolbar = ({
           )}
         </Tooltip>
       </TooltipProvider>
+      <Button
+        onClick={() => document.getElementById('import-file-input')?.click()}
+        variant="outline"
+        className="transition-colors"
+      >
+        <Upload className="h-4 w-4 " />
+        Import JSON
+      </Button>
+      <input
+        id="import-file-input"
+        type="file"
+        accept=".json,.zip"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            onImport(e.target.files);
+            e.target.value = ''; // Reset input
+          }
+        }}
+      />
       <Button
         onClick={onChangeLogs}
         variant="outline"
