@@ -71,7 +71,7 @@ export const AddPlanDialog = ({
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="plan-id">Plan ID *</Label>
+              <Label htmlFor="plan-id">Plan ID (File name)*</Label>
               <Input
                 id="plan-id"
                 placeholder="e.g., premium-2024"
@@ -89,8 +89,8 @@ export const AddPlanDialog = ({
               <Input
                 id="plan-name"
                 placeholder="e.g., Premium 2024"
-                value={planName}
-                onChange={(e) => setPlanName(e.target.value)}
+                value={planId.replace(/[^a-zA-Z0-9]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())}
+                disabled
                 className="w-full"
               />
             </div>
