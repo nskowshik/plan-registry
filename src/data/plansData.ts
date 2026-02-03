@@ -27,8 +27,8 @@ export interface Feature {
   plans: Record<string, Record<string, any>>;
 }
 
-// Dynamically import all JSON files from root directory
-const jsonModules = import.meta.glob("../../../*.json", { eager: true });
+// Dynamically import all JSON files from plans directory
+const jsonModules = import.meta.glob("./plans/*.json", { eager: true });
 
 // Build plan data map from imported JSON files
 const planDataMap: Record<string, Record<string, FeatureData>> = {};

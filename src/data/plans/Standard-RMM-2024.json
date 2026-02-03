@@ -1,0 +1,724 @@
+{
+    "ACRONIS": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "AGENT_COLLISION": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ai_ticket_summary": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ALERT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "AUTOMATIC_TICKET_ASSIGNMENT": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "AZURE_AD": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "OKTA": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "BITDEFENDER": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "BITDEFENDER_V2": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "calendar_scheduling": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CLIENT_MANAGEMENT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CONNECTWISE_CONTROL": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CONTRACT_MANAGEMENT": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CSAT": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CUSTOM_MAIL_SERVER": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CUSTOM_REBRANDING": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CUSTOM_REPORTS": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CUSTOM_ROLES": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "DATA_REPORTS": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "EFFICIENCY_REPORTS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ENTITY_ID_GENERATOR": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "guardz": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "HALO_PSA": {
+        "canEnabled": true,
+        "canEnabledWithFlag": true,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "HOLIDAY_MANAGEMENT": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "HUDU": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "IN_APP_NOTIFICATIONS": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "INTELLIGENT_ALERTING": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "INTELLIGENT_AUTOMATION": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "INVOICING": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "IP_WHITELISTING": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "IT_DOCUMENTATION": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "MAC_MANAGEMENT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "MOBILE_APP": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "MOBILE_PUSH_NOTIFICATIONS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "MULTIPLE_MAILBOX": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "MULTIPLE_SLA": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "network-monitoring-system": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": "Super-2024",
+        "upsellAddonId": "Network-Monitoring-2024"
+    },
+    "OS_PATCH_MANAGEMENT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "PASSWORD_POLICY": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "PAX8": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "POLICY_MANAGEMENT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "PROJECT_MANAGEMENT": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "PROJECT_TEMPLATES": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "PSA_API": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "QUICKBOOKS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "QUICKBOOKS_DESKTOP": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "QUOTING": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "REMOTE_BACKGROUND_TOOLS": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "REPORTING": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "REPORTS": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "RMM_API": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "RUNBOOKS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SALES_INBOX": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SCHEDULE_REPORTS": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SCRIPTING": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SENTINALONE": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SERVICE_CATALOG": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SESSION_TIMEOUT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SIDE_CONVERSATIONS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SPLASHTOP_BUNDLE": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ISL_BUNDLE": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "SSO": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ST_MANAGER_ALL_TIMERS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ST_TECH_CLIENT_WORKLOG": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ST_TECH_MY_TIMERS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ST_TECH_WORKLOG_CALENDAR": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ST_TECH_WORKLOG_LIST": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ST_TRACK_ANYWHERE": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "STRIPE": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TASK": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TASK_TEMPLATES": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TAX": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TEAMVIEWER": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TEMPLATES": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TFA": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "THIRD_PARTY_APP_MANAGEMENT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TICKET_TEMPLATES": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TICKETING": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "TIME_TRIGGERS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "WEBROOT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "WINDOWS_MANAGEMENT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "XERO": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ALL_TIME_SHEET": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "EMSISOFT": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ESET": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "AGENT_CHAT": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ADVANCED_HIERARCHY_POLICY": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CONTRACT_REPORTS": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CONTRACT_V3": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "ITGLUE": {
+        "canEnabled": true,
+        "canEnabledWithFlag": true,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "RMM_METRIC_TIMESERIES": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "RUNBOOK_ACTION_RUN_SCRIPT": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": "Super",
+        "upsellAddonId": null
+    },
+    "RUNBOOK_ACTION_IT_DOCUMENTATION": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": "Super",
+        "upsellAddonId": null
+    },
+    "RUNBOOK_ACTION_UPDATE_PROPERTY": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": "Super",
+        "upsellAddonId": null
+    },
+    "RUNBOOK_ACTION_SIDE_CONVERSATION": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": "Super",
+        "upsellAddonId": null
+    },
+    "RUNBOOK_ACTION_NOTES": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": "Super",
+        "upsellAddonId": null
+    },
+    "RUNBOOK_ACTION_WORKLOG": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": "Super",
+        "upsellAddonId": null
+    },
+    "RUNBOOK_ACTION_AUTO_ACTION": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": "Super",
+        "upsellAddonId": null
+    },
+    "AI_FEATURES": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "KNOWLEDGE_BASE": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "CUSTOM_SOFTWARE": {
+        "canEnabled": true,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": true,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
+    "MDM": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": "Super_Plus",
+        "upsellAddonId": null,
+        "trialAddonId": "MDM-MSP-Trial"
+    },
+    "IM_APP": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    }
+}
