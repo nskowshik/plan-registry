@@ -39,6 +39,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -46,7 +52,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import html2canvas from "html2canvas";
-import JSZip from "jszip";
+import { exportFeaturesToJSON } from "./PlansTable/utils/exportUtils";
 
 const createEmptyFeature = (id: string): Feature => ({
   id,
@@ -68,18 +74,30 @@ const PlansTable = () => {
   const [newFeatureName, setNewFeatureName] = useState<string>("");
   const [copyFromFeatureId, setCopyFromFeatureId] = useState<string>("");
   // Per-plan selections for each category
-  const [canEnabledPlans, setCanEnabledPlans] = useState<Set<string>>(new Set());
-  const [canEnabledWithFlagPlans, setCanEnabledWithFlagPlans] = useState<Set<string>>(new Set());
-  const [canEnabledInTrialPlans, setCanEnabledInTrialPlans] = useState<Set<string>>(new Set());
+  const [canEnabledPlans, setCanEnabledPlans] = useState<Set<string>>(
+    new Set(),
+  );
+  const [canEnabledWithFlagPlans, setCanEnabledWithFlagPlans] = useState<
+    Set<string>
+  >(new Set());
+  const [canEnabledInTrialPlans, setCanEnabledInTrialPlans] = useState<
+    Set<string>
+  >(new Set());
   // Upsell fields: name (text) + selected plans (Set)
   const [upsellPlanName, setUpsellPlanName] = useState<string>("");
-  const [upsellPlanSelectedPlans, setUpsellPlanSelectedPlans] = useState<Set<string>>(new Set());
+  const [upsellPlanSelectedPlans, setUpsellPlanSelectedPlans] = useState<
+    Set<string>
+  >(new Set());
   const [upsellAddonName, setUpsellAddonName] = useState<string>("");
-  const [upsellAddonSelectedPlans, setUpsellAddonSelectedPlans] = useState<Set<string>>(new Set());
+  const [upsellAddonSelectedPlans, setUpsellAddonSelectedPlans] = useState<
+    Set<string>
+  >(new Set());
   // Search states for dropdowns
   const [canEnabledSearch, setCanEnabledSearch] = useState<string>("");
-  const [canEnabledWithFlagSearch, setCanEnabledWithFlagSearch] = useState<string>("");
-  const [canEnabledInTrialSearch, setCanEnabledInTrialSearch] = useState<string>("");
+  const [canEnabledWithFlagSearch, setCanEnabledWithFlagSearch] =
+    useState<string>("");
+  const [canEnabledInTrialSearch, setCanEnabledInTrialSearch] =
+    useState<string>("");
   const [upsellPlanSearch, setUpsellPlanSearch] = useState<string>("");
   const [upsellAddonSearch, setUpsellAddonSearch] = useState<string>("");
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
@@ -177,7 +195,7 @@ const PlansTable = () => {
     if (!newFeatureName.trim()) return;
 
     const newId = `feature-${Date.now()}`;
-    
+
     const newFeature: Feature = {
       id: newId,
       name: newFeatureName.trim(),
@@ -187,8 +205,12 @@ const PlansTable = () => {
             canEnabled: canEnabledPlans.has(plan.id),
             canEnabledWithFlag: canEnabledWithFlagPlans.has(plan.id),
             canEnabledInTrial: canEnabledInTrialPlans.has(plan.id),
-            upsellPlanId: upsellPlanSelectedPlans.has(plan.id) ? upsellPlanName : null,
-            upsellAddonId: upsellAddonSelectedPlans.has(plan.id) ? upsellAddonName : null,
+            upsellPlanId: upsellPlanSelectedPlans.has(plan.id)
+              ? upsellPlanName
+              : null,
+            upsellAddonId: upsellAddonSelectedPlans.has(plan.id)
+              ? upsellAddonName
+              : null,
           };
           return acc;
         },
@@ -210,33 +232,7 @@ const PlansTable = () => {
   };
 
   const handleExport = async () => {
-    const zip = new JSZip();
-
-    // Convert features array back to original JSON format for each plan
-    visiblePlans.forEach((plan) => {
-      const planData: Record<string, any> = {};
-
-      features.forEach((feature) => {
-        // Use the original feature name (before formatting) as the key
-        // We'll use the feature.name as is since it's already formatted
-        const featureKey = feature.name.toUpperCase().replace(/\s+/g, "_");
-
-        // Get all plan data for this feature, including all properties
-        planData[featureKey] = feature.plans[plan.id] || {};
-      });
-
-      // Add JSON file to zip
-      zip.file(`${plan.id}.json`, JSON.stringify(planData, null, 2));
-    });
-
-    // Generate zip file and trigger download
-    const blob = await zip.generateAsync({ type: "blob" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `gating-json-${new Date().toString()}.zip`;
-    a.click();
-    URL.revokeObjectURL(url);
+    await exportFeaturesToJSON(features, visiblePlans);
   };
 
   const handleFeatureNameChange = (featureId: string, name: string) => {
@@ -297,7 +293,7 @@ const PlansTable = () => {
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="hover:bg-primary/5 transition-colors"
+              className="transition-colors"
             >
               <Settings2 className="h-4 w-4 mr-2" />
               Configure Columns
@@ -359,18 +355,42 @@ const PlansTable = () => {
             </div>
           </PopoverContent>
         </Popover>
-        <Button
-          onClick={handleExport}
-          variant="outline"
-          className="hover:bg-primary/5 transition-colors"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export JSON
-        </Button>
+        {isEditMode && (
+          <Button
+            onClick={handleAddRow}
+            variant="outline"
+            className="hover:bg-primary transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Feature Row
+          </Button>
+        )}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  onClick={handleExport}
+                  variant="outline"
+                  className="transition-colors"
+                  disabled={Object.keys(changedFeatures).length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export JSON
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {Object.keys(changedFeatures).length === 0 && (
+              <TooltipContent>
+                <p>No changes to export</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
         <Button
           onClick={changeLogs}
           variant="outline"
-          className="hover:bg-primary/5 transition-colors"
+          className="transition-colors"
         >
           ✍️ Change log
         </Button>
@@ -524,20 +544,6 @@ const PlansTable = () => {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      {isEditMode && (
-        <div className="flex gap-2">
-          <Button
-            onClick={handleAddRow}
-            variant="outline"
-            className="flex-1 border-dashed border-2 hover:border-primary hover:bg-primary/5 transition-colors"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Feature Row
-          </Button>
-        </div>
-      )}
-
       {/* Add Feature Dialog */}
       <Dialog
         open={showAddFeatureDialog}
@@ -589,7 +595,9 @@ const PlansTable = () => {
               </label>
               <div className="space-y-4 border rounded-lg p-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Can Enabled</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Can Enabled
+                  </label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -615,29 +623,31 @@ const PlansTable = () => {
                         <div className="max-h-60 overflow-y-auto">
                           {plans
                             .filter((plan) =>
-                              plan.name.toLowerCase().includes(canEnabledSearch.toLowerCase())
+                              plan.name
+                                .toLowerCase()
+                                .includes(canEnabledSearch.toLowerCase()),
                             )
                             .map((plan) => (
-                            <div
-                              key={plan.id}
-                              className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => {
-                                const newSet = new Set(canEnabledPlans);
-                                if (newSet.has(plan.id)) {
-                                  newSet.delete(plan.id);
-                                } else {
-                                  newSet.add(plan.id);
-                                }
-                                setCanEnabledPlans(newSet);
-                              }}
-                            >
-                              <Checkbox
-                                checked={canEnabledPlans.has(plan.id)}
-                                onCheckedChange={() => {}}
-                              />
-                              <span className="text-sm">{plan.name}</span>
-                            </div>
-                          ))}
+                              <div
+                                key={plan.id}
+                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
+                                onClick={() => {
+                                  const newSet = new Set(canEnabledPlans);
+                                  if (newSet.has(plan.id)) {
+                                    newSet.delete(plan.id);
+                                  } else {
+                                    newSet.add(plan.id);
+                                  }
+                                  setCanEnabledPlans(newSet);
+                                }}
+                              >
+                                <Checkbox
+                                  checked={canEnabledPlans.has(plan.id)}
+                                  onCheckedChange={() => {}}
+                                />
+                                <span className="text-sm">{plan.name}</span>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     </PopoverContent>
@@ -645,7 +655,9 @@ const PlansTable = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Can Enabled With Flag</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Can Enabled With Flag
+                  </label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -666,34 +678,42 @@ const PlansTable = () => {
                           placeholder="Search plans..."
                           className="mb-2"
                           value={canEnabledWithFlagSearch}
-                          onChange={(e) => setCanEnabledWithFlagSearch(e.target.value)}
+                          onChange={(e) =>
+                            setCanEnabledWithFlagSearch(e.target.value)
+                          }
                         />
                         <div className="max-h-60 overflow-y-auto">
                           {plans
                             .filter((plan) =>
-                              plan.name.toLowerCase().includes(canEnabledWithFlagSearch.toLowerCase())
+                              plan.name
+                                .toLowerCase()
+                                .includes(
+                                  canEnabledWithFlagSearch.toLowerCase(),
+                                ),
                             )
                             .map((plan) => (
-                            <div
-                              key={plan.id}
-                              className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => {
-                                const newSet = new Set(canEnabledWithFlagPlans);
-                                if (newSet.has(plan.id)) {
-                                  newSet.delete(plan.id);
-                                } else {
-                                  newSet.add(plan.id);
-                                }
-                                setCanEnabledWithFlagPlans(newSet);
-                              }}
-                            >
-                              <Checkbox
-                                checked={canEnabledWithFlagPlans.has(plan.id)}
-                                onCheckedChange={() => {}}
-                              />
-                              <span className="text-sm">{plan.name}</span>
-                            </div>
-                          ))}
+                              <div
+                                key={plan.id}
+                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
+                                onClick={() => {
+                                  const newSet = new Set(
+                                    canEnabledWithFlagPlans,
+                                  );
+                                  if (newSet.has(plan.id)) {
+                                    newSet.delete(plan.id);
+                                  } else {
+                                    newSet.add(plan.id);
+                                  }
+                                  setCanEnabledWithFlagPlans(newSet);
+                                }}
+                              >
+                                <Checkbox
+                                  checked={canEnabledWithFlagPlans.has(plan.id)}
+                                  onCheckedChange={() => {}}
+                                />
+                                <span className="text-sm">{plan.name}</span>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     </PopoverContent>
@@ -701,7 +721,9 @@ const PlansTable = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Can Enabled In Trial</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Can Enabled In Trial
+                  </label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -722,34 +744,42 @@ const PlansTable = () => {
                           placeholder="Search plans..."
                           className="mb-2"
                           value={canEnabledInTrialSearch}
-                          onChange={(e) => setCanEnabledInTrialSearch(e.target.value)}
+                          onChange={(e) =>
+                            setCanEnabledInTrialSearch(e.target.value)
+                          }
                         />
                         <div className="max-h-60 overflow-y-auto">
                           {plans
                             .filter((plan) =>
-                              plan.name.toLowerCase().includes(canEnabledInTrialSearch.toLowerCase())
+                              plan.name
+                                .toLowerCase()
+                                .includes(
+                                  canEnabledInTrialSearch.toLowerCase(),
+                                ),
                             )
                             .map((plan) => (
-                            <div
-                              key={plan.id}
-                              className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => {
-                                const newSet = new Set(canEnabledInTrialPlans);
-                                if (newSet.has(plan.id)) {
-                                  newSet.delete(plan.id);
-                                } else {
-                                  newSet.add(plan.id);
-                                }
-                                setCanEnabledInTrialPlans(newSet);
-                              }}
-                            >
-                              <Checkbox
-                                checked={canEnabledInTrialPlans.has(plan.id)}
-                                onCheckedChange={() => {}}
-                              />
-                              <span className="text-sm">{plan.name}</span>
-                            </div>
-                          ))}
+                              <div
+                                key={plan.id}
+                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
+                                onClick={() => {
+                                  const newSet = new Set(
+                                    canEnabledInTrialPlans,
+                                  );
+                                  if (newSet.has(plan.id)) {
+                                    newSet.delete(plan.id);
+                                  } else {
+                                    newSet.add(plan.id);
+                                  }
+                                  setCanEnabledInTrialPlans(newSet);
+                                }}
+                              >
+                                <Checkbox
+                                  checked={canEnabledInTrialPlans.has(plan.id)}
+                                  onCheckedChange={() => {}}
+                                />
+                                <span className="text-sm">{plan.name}</span>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     </PopoverContent>
@@ -757,14 +787,18 @@ const PlansTable = () => {
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  <label className="text-sm font-medium mb-2 block">Upsell Plan</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Upsell Plan
+                  </label>
                   <Input
                     placeholder="Enter upsell plan name..."
                     value={upsellPlanName}
                     onChange={(e) => setUpsellPlanName(e.target.value)}
                     className="mb-2"
                   />
-                  <label className="text-sm font-medium mb-2 block">Select Plans for Upsell Plan</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Select Plans for Upsell Plan
+                  </label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -790,29 +824,33 @@ const PlansTable = () => {
                         <div className="max-h-60 overflow-y-auto">
                           {plans
                             .filter((plan) =>
-                              plan.name.toLowerCase().includes(upsellPlanSearch.toLowerCase())
+                              plan.name
+                                .toLowerCase()
+                                .includes(upsellPlanSearch.toLowerCase()),
                             )
                             .map((plan) => (
-                            <div
-                              key={plan.id}
-                              className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => {
-                                const newSet = new Set(upsellPlanSelectedPlans);
-                                if (newSet.has(plan.id)) {
-                                  newSet.delete(plan.id);
-                                } else {
-                                  newSet.add(plan.id);
-                                }
-                                setUpsellPlanSelectedPlans(newSet);
-                              }}
-                            >
-                              <Checkbox
-                                checked={upsellPlanSelectedPlans.has(plan.id)}
-                                onCheckedChange={() => {}}
-                              />
-                              <span className="text-sm">{plan.name}</span>
-                            </div>
-                          ))}
+                              <div
+                                key={plan.id}
+                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
+                                onClick={() => {
+                                  const newSet = new Set(
+                                    upsellPlanSelectedPlans,
+                                  );
+                                  if (newSet.has(plan.id)) {
+                                    newSet.delete(plan.id);
+                                  } else {
+                                    newSet.add(plan.id);
+                                  }
+                                  setUpsellPlanSelectedPlans(newSet);
+                                }}
+                              >
+                                <Checkbox
+                                  checked={upsellPlanSelectedPlans.has(plan.id)}
+                                  onCheckedChange={() => {}}
+                                />
+                                <span className="text-sm">{plan.name}</span>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     </PopoverContent>
@@ -820,14 +858,18 @@ const PlansTable = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium mb-2 block">Upsell Addon</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Upsell Addon
+                  </label>
                   <Input
                     placeholder="Enter upsell addon name..."
                     value={upsellAddonName}
                     onChange={(e) => setUpsellAddonName(e.target.value)}
                     className="mb-2"
                   />
-                  <label className="text-sm font-medium mb-2 block">Select Plans for Upsell Addon</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    Select Plans for Upsell Addon
+                  </label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -853,29 +895,35 @@ const PlansTable = () => {
                         <div className="max-h-60 overflow-y-auto">
                           {plans
                             .filter((plan) =>
-                              plan.name.toLowerCase().includes(upsellAddonSearch.toLowerCase())
+                              plan.name
+                                .toLowerCase()
+                                .includes(upsellAddonSearch.toLowerCase()),
                             )
                             .map((plan) => (
-                            <div
-                              key={plan.id}
-                              className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => {
-                                const newSet = new Set(upsellAddonSelectedPlans);
-                                if (newSet.has(plan.id)) {
-                                  newSet.delete(plan.id);
-                                } else {
-                                  newSet.add(plan.id);
-                                }
-                                setUpsellAddonSelectedPlans(newSet);
-                              }}
-                            >
-                              <Checkbox
-                                checked={upsellAddonSelectedPlans.has(plan.id)}
-                                onCheckedChange={() => {}}
-                              />
-                              <span className="text-sm">{plan.name}</span>
-                            </div>
-                          ))}
+                              <div
+                                key={plan.id}
+                                className="flex items-center space-x-2 p-2 hover:bg-accent rounded cursor-pointer"
+                                onClick={() => {
+                                  const newSet = new Set(
+                                    upsellAddonSelectedPlans,
+                                  );
+                                  if (newSet.has(plan.id)) {
+                                    newSet.delete(plan.id);
+                                  } else {
+                                    newSet.add(plan.id);
+                                  }
+                                  setUpsellAddonSelectedPlans(newSet);
+                                }}
+                              >
+                                <Checkbox
+                                  checked={upsellAddonSelectedPlans.has(
+                                    plan.id,
+                                  )}
+                                  onCheckedChange={() => {}}
+                                />
+                                <span className="text-sm">{plan.name}</span>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     </PopoverContent>
@@ -892,13 +940,6 @@ const PlansTable = () => {
                 setShowAddFeatureDialog(false);
                 setNewFeatureName("");
                 setCopyFromFeatureId("");
-                setNewFeatureDefaults({
-                  canEnabled: false,
-                  canEnabledWithFlag: false,
-                  canEnabledInTrial: false,
-                  upsellPlanId: "",
-                  upsellAddonId: "",
-                });
               }}
             >
               Cancel
