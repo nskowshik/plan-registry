@@ -76,7 +76,7 @@ const PlansTable = () => {
   const [editingName, setEditingName] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [columnSearchQuery, setColumnSearchQuery] = useState<string>("");
-  const [isEditMode, setIsEditMode] = useState<boolean>(true);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [showChangeLogsDialog, setShowChangeLogsDialog] =
     useState<boolean>(false);
   const [showAddFeatureDialog, setShowAddFeatureDialog] =
@@ -84,6 +84,7 @@ const PlansTable = () => {
   const [showAddPlanDialog, setShowAddPlanDialog] = useState<boolean>(false);
   const [showExportDialog, setShowExportDialog] = useState<boolean>(false);
   const [exportAllPlans, setExportAllPlans] = useState<boolean>(false);
+  const [recentlyChangedCells, setRecentlyChangedCells] = useState<Set<string>>(new Set());
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
     localPlans.reduce((acc, plan) => {
       const isNFR =
@@ -357,20 +358,34 @@ const PlansTable = () => {
     planId: string,
     subColId: string,
   ) => {
-    setFeatures(
-      features.map((f) => {
-        if (f.id !== featureId) return f;
-        return {
-          ...f,
-          plans: {
-            ...f.plans,
-            [planId]: {
-              ...f.plans[planId],
-              [subColId]: !f.plans[planId][subColId],
-            },
-          },
-        };
-      }),
+    // Add cell to recently changed set
+    const cellKey = `${featureId}-${planId}-${subColId}`;
+    setRecentlyChangedCells((prev) => new Set(prev).add(cellKey));
+    
+    // Remove from set after animation completes
+    setTimeout(() => {
+      setRecentlyChangedCells((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(cellKey);
+        return newSet;
+      });
+    }, 600);
+    
+    setFeatures((prevFeatures) =>
+      prevFeatures.map((feature) =>
+        feature.id === featureId
+          ? {
+              ...feature,
+              plans: {
+                ...feature.plans,
+                [planId]: {
+                  ...feature.plans[planId],
+                  [subColId]: !feature.plans[planId]?.[subColId],
+                },
+              },
+            }
+          : feature,
+      ),
     );
   };
 
@@ -380,6 +395,51 @@ const PlansTable = () => {
 
   const changeLogs = () => {
     setShowChangeLogsDialog(true);
+  };
+
+  const handleRevertFeature = (featureName: string) => {
+    // Find the original feature by name
+    const originalFeature = originalFeatures.find((f) => f.name === featureName);
+    
+    if (originalFeature) {
+      // Revert to original feature
+      setFeatures((prevFeatures) =>
+        prevFeatures.map((f) =>
+          f.name === featureName ? { ...originalFeature } : f
+        )
+      );
+    } else {
+      // If it's a new feature, remove it
+      setFeatures((prevFeatures) =>
+        prevFeatures.filter((f) => f.name !== featureName)
+      );
+    }
+  };
+
+  const handleRevertPlan = (planId: string) => {
+    // Remove the plan from localPlans
+    setLocalPlans((prevPlans) => prevPlans.filter((p) => p.id !== planId));
+    
+    // Remove from newly added plans
+    setNewlyAddedPlans((prevNewPlans) =>
+      prevNewPlans.filter((id) => id !== planId)
+    );
+    
+    // Remove from visible columns
+    setVisibleColumns((prevColumns) => {
+      const newColumns = { ...prevColumns };
+      delete newColumns[planId];
+      return newColumns;
+    });
+    
+    // Remove plan data from all features
+    setFeatures((prevFeatures) =>
+      prevFeatures.map((feature) => {
+        const newPlans = { ...feature.plans };
+        delete newPlans[planId];
+        return { ...feature, plans: newPlans };
+      })
+    );
   };
 
   return (
@@ -515,31 +575,46 @@ const PlansTable = () => {
                       <TableCell
                         key={`${feature.id}-${plan.id}-${subCol.id}`}
                         className={cn(
-                          "py-3 px-3 text-center",
+                          "py-3 px-3 text-center transition-all duration-200 ease-in-out relative",
                           plan.isPopular && "bg-primary/5",
                           subIndex === subColumns.length - 1 &&
                             "border-r border-border last:border-r-0",
                         )}
                       >
+                        {recentlyChangedCells.has(`${feature.id}-${plan.id}-${subCol.id}`) && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            {feature?.plans?.[plan?.id]?.[subCol?.id] ? (
+                              <>
+                                <div className="w-8 h-8 rounded-full bg-green-500/30 dark:bg-green-400/30 animate-ping" />
+                                <div className="absolute w-8 h-8 rounded-full bg-green-500/50 dark:bg-green-400/50 animate-pulse" />
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-8 h-8 rounded-full bg-red-500/30 dark:bg-red-400/30 animate-ping" />
+                                <div className="absolute w-8 h-8 rounded-full bg-red-500/50 dark:bg-red-400/50 animate-pulse" />
+                              </>
+                            )}
+                          </div>
+                        )}
                         {isEditMode ? (
                           <button
                             onClick={() =>
                               toggleCheckbox(feature.id, plan.id, subCol.id)
                             }
-                            className="w-full flex justify-center cursor-pointer hover:opacity-70 transition-opacity"
+                            className="w-full flex justify-center cursor-pointer hover:opacity-70 transition-all duration-200 hover:scale-110 active:scale-90 relative z-10"
                           >
                             {feature?.plans?.[plan?.id]?.[subCol?.id] ? (
-                              <Check className="h-4 w-4 text-green-600" />
+                              <Check className="h-4 w-4 text-green-600 transition-all duration-200" />
                             ) : (
-                              <X className="h-4 w-4 text-red-500" />
+                              <X className="h-4 w-4 text-red-500 transition-all duration-200" />
                             )}
                           </button>
                         ) : (
-                          <div className="w-full flex justify-center">
+                          <div className="w-full flex justify-center relative z-10">
                             {feature?.plans?.[plan?.id]?.[subCol?.id] ? (
-                              <Check className="h-4 w-4 text-green-600" />
+                              <Check className="h-4 w-4 text-green-600 transition-all duration-200" />
                             ) : (
-                              <X className="h-4 w-4 text-red-500" />
+                              <X className="h-4 w-4 text-red-500 transition-all duration-200" />
                             )}
                           </div>
                         )}
@@ -570,6 +645,8 @@ const PlansTable = () => {
         newlyAddedPlans={newlyAddedPlans}
         allPlans={localPlans}
         features={features}
+        onRevertFeature={handleRevertFeature}
+        onRevertPlan={handleRevertPlan}
       />
 
       {/* Add Plan Dialog */}

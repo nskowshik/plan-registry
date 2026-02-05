@@ -1,12 +1,17 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download, Image as ImageIcon, Loader2, Undo2 } from "lucide-react";
+import html2canvas from "html2canvas";
+import JSZip from "jszip";
 import { ChangedFeature } from "../types";
 import { Plan, Feature } from "@/data/plansData";
 
@@ -17,6 +22,8 @@ interface ChangeLogsDialogProps {
   newlyAddedPlans: string[];
   allPlans: Plan[];
   features: Feature[];
+  onRevertFeature?: (featureId: string) => void;
+  onRevertPlan?: (planId: string) => void;
 }
 
 export const ChangeLogsDialog = ({
@@ -26,8 +33,137 @@ export const ChangeLogsDialog = ({
   newlyAddedPlans,
   allPlans,
   features,
+  onRevertFeature,
+  onRevertPlan,
 }: ChangeLogsDialogProps) => {
   const changeLogsContentRef = useRef<HTMLDivElement>(null);
+  const [isDownloadingImage, setIsDownloadingImage] = useState(false);
+  const [isDownloadingJSON, setIsDownloadingJSON] = useState(false);
+
+  const handleDownloadImage = async () => {
+    if (!changeLogsContentRef.current || isDownloadingImage) return;
+
+    setIsDownloadingImage(true);
+    
+    // Allow React to render the loading state before starting heavy work
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    try {
+      const element = changeLogsContentRef.current;
+      const zip = new JSZip();
+      
+      // A4 dimensions at 96 DPI
+      const A4_HEIGHT = 1123; // pixels at 96 DPI (11.69 * 96)
+      
+      // Temporarily set the element to show all content
+      const originalOverflow = element.style.overflow;
+      const originalMaxHeight = element.style.maxHeight;
+      element.style.overflow = "visible";
+      element.style.maxHeight = "none";
+      
+      // Capture the entire content once with optimized settings
+      const fullCanvas = await html2canvas(element, {
+        backgroundColor: "#ffffff",
+        scale: 1.5, // Reduced from 2 for better performance
+        useCORS: true,
+        allowTaint: true,
+        logging: false, // Disable logging for performance
+        removeContainer: true,
+      });
+      
+      // Restore original styles immediately after capture
+      element.style.overflow = originalOverflow;
+      element.style.maxHeight = originalMaxHeight;
+      
+      // Calculate how many pages we need
+      const fullHeight = fullCanvas.height;
+      const scaledA4Height = A4_HEIGHT * 1.5; // Match the scale
+      const numPages = Math.ceil(fullHeight / scaledA4Height);
+      
+      // Split the full canvas into A4-sized pages
+      for (let i = 0; i < numPages; i++) {
+        const pageCanvas = document.createElement("canvas");
+        const pageHeight = Math.min(scaledA4Height, fullHeight - (i * scaledA4Height));
+        
+        pageCanvas.width = fullCanvas.width;
+        pageCanvas.height = pageHeight;
+        
+        const ctx = pageCanvas.getContext("2d");
+        if (ctx) {
+          // Draw the portion of the full canvas onto this page
+          ctx.drawImage(
+            fullCanvas,
+            0, i * scaledA4Height, // Source x, y
+            fullCanvas.width, pageHeight, // Source width, height
+            0, 0, // Destination x, y
+            fullCanvas.width, pageHeight // Destination width, height
+          );
+          
+          // Convert to blob
+          const blob = await new Promise<Blob>((resolve) => {
+            pageCanvas.toBlob((blob) => resolve(blob!), "image/png", 0.95);
+          });
+          
+          // Add to zip
+          zip.file(`change-logs-page-${i + 1}.png`, blob);
+        }
+      }
+      
+      // Generate and download zip
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `change-logs-${new Date().toISOString()}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      alert("Failed to download images");
+    } finally {
+      setIsDownloadingImage(false);
+    }
+  };
+
+  const handleDownloadJSON = () => {
+    if (isDownloadingJSON) return;
+
+    setIsDownloadingJSON(true);
+    try {
+      const changeLogData = {
+      timestamp: new Date().toISOString(),
+      summary: {
+        modifiedFeatures: Object.keys(changedFeatures).length,
+        newlyAddedPlans: newlyAddedPlans.length,
+      },
+      changedFeatures,
+      newlyAddedPlans: newlyAddedPlans.map((planId) => {
+        const plan = allPlans.find((p) => p.id === planId);
+        return {
+          planId,
+          planName: plan?.name,
+          isPopular: plan?.isPopular,
+          isActive: plan?.isActive,
+        };
+      }),
+    };
+
+    const blob = new Blob([JSON.stringify(changeLogData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `change-logs-${new Date().toISOString()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading JSON:", error);
+      alert("Failed to download JSON");
+    } finally {
+      setIsDownloadingJSON(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,13 +214,24 @@ export const ChangeLogsDialog = ({
                         className="border rounded-lg p-4 bg-card"
                       >
                         <div className="flex items-center gap-2 mb-3">
-                          <h4 className="font-semibold text-lg">{plan.name}</h4>
+                          <h4 className="font-semibold text-lg flex-1">{plan.name}</h4>
                           <Badge variant="default">NEW PLAN</Badge>
                           {plan.isPopular && (
                             <Badge variant="secondary">Popular</Badge>
                           )}
                           {plan.isActive && (
                             <Badge variant="outline">Active</Badge>
+                          )}
+                          {onRevertPlan && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRevertPlan(planId)}
+                              className="h-8 px-2"
+                            >
+                              <Undo2 className="h-4 w-4 mr-1" />
+                              Revert
+                            </Button>
                           )}
                         </div>
                         <div className="text-sm text-muted-foreground mb-3">
@@ -174,7 +321,7 @@ export const ChangeLogsDialog = ({
                         className="border rounded-lg p-4 bg-card"
                       >
                         <div className="flex items-center gap-2 mb-3">
-                          <h3 className="font-semibold text-lg">
+                          <h3 className="font-semibold text-lg flex-1">
                             {featureName}
                           </h3>
                           <Badge
@@ -188,6 +335,17 @@ export const ChangeLogsDialog = ({
                           >
                             {featureData.status}
                           </Badge>
+                          {onRevertFeature && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRevertFeature(featureName)}
+                              className="h-8 px-2"
+                            >
+                              <Undo2 className="h-4 w-4 mr-1" />
+                              Revert
+                            </Button>
+                          )}
                         </div>
 
                         {featureData.status === "RENAMED" && (
@@ -417,6 +575,32 @@ export const ChangeLogsDialog = ({
             </>
           )}
         </div>
+        <DialogFooter className="border-t pt-4">
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadImage}
+            disabled={isDownloadingImage || isDownloadingJSON}
+          >
+            {isDownloadingImage ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <ImageIcon className="h-4 w-4 mr-2" />
+            )}
+            {isDownloadingImage ? "Generating Images..." : "Download as Image"}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadJSON}
+            disabled={isDownloadingImage || isDownloadingJSON}
+          >
+            {isDownloadingJSON ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {isDownloadingJSON ? "Generating JSON..." : "Download as JSON"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

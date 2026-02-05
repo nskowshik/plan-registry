@@ -67,16 +67,16 @@ export const Toolbar = ({
       <Button
         onClick={onToggleEditMode}
         variant={isEditMode ? "default" : "outline"}
-        className="hover:bg-primary/90 transition-colors"
+        className="hover:bg-primary/90 transition-all duration-300 ease-in-out hover:scale-105 active:scale-95"
       >
         {isEditMode ? (
           <>
-            <Save className="h-4 w-4" />
+            <Save className="h-4 w-4 mr-2 transition-transform duration-300" />
             Save
           </>
         ) : (
           <>
-            <Edit className="h-4 w-4" />
+            <Edit className="h-4 w-4 mr-2 transition-transform duration-300" />
             Edit Mode
           </>
         )}
@@ -187,7 +187,7 @@ export const Toolbar = ({
         </Tooltip>
       </TooltipProvider>
       <Button
-        onClick={() => document.getElementById('import-file-input')?.click()}
+        onClick={() => document.getElementById("import-file-input")?.click()}
         variant="outline"
         className="transition-colors"
       >
@@ -203,17 +203,20 @@ export const Toolbar = ({
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
             onImport(e.target.files);
-            e.target.value = ''; // Reset input
+            e.target.value = ""; // Reset input
           }
         }}
       />
-      <Button
-        onClick={onChangeLogs}
-        variant="outline"
-        className="transition-colors"
-      >
-        ✍️ Change log
-      </Button>
+      {changedFeaturesCount > 0 && (
+        <Button
+          onClick={onChangeLogs}
+          variant="outline"
+          className="transition-colors"
+        >
+          ✍️ Change log{" "}
+          {changedFeaturesCount > 0 && `(${changedFeaturesCount})`}
+        </Button>
+      )}
     </div>
   );
 };
