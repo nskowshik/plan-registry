@@ -1,6 +1,17 @@
 import JSZip from "jszip";
 import { Feature, Plan, ChangedFeature } from "../types";
 
+// Helper function to get feature value with defaults
+const getFeatureValue = (feature: Feature, planId: string) => {
+  return feature.plans[planId] || {
+    canEnabled: false,
+    canEnabledWithFlag: false,
+    canEnabledInTrial: false,
+    upsellPlanId: null,
+    upsellAddonId: null,
+  };
+};
+
 export const exportFeaturesToJSON = async (features: Feature[], visiblePlans: Plan[]) => {
   const zip = new JSZip();
 
@@ -9,7 +20,7 @@ export const exportFeaturesToJSON = async (features: Feature[], visiblePlans: Pl
 
     features.forEach((feature) => {
       const featureKey = feature.name.toUpperCase().replace(/\s+/g, "_");
-      planData[featureKey] = feature.plans[plan.id] || {};
+      planData[featureKey] = getFeatureValue(feature, plan.id);
     });
 
     zip.file(`${plan.id}.json`, JSON.stringify(planData, null, 2));
@@ -48,7 +59,7 @@ export const exportSmartJSON = async (
       
       features.forEach((feature) => {
         const featureKey = feature.name.toUpperCase().replace(/\s+/g, "_");
-        planData[featureKey] = feature.plans[plan.id] || {};
+        planData[featureKey] = getFeatureValue(feature, plan.id);
       });
       
       zip.file(`${plan.id}.json`, JSON.stringify(planData, null, 2));
@@ -65,7 +76,7 @@ export const exportSmartJSON = async (
       
       features.forEach((feature) => {
         const featureKey = feature.name.toUpperCase().replace(/\s+/g, "_");
-        planData[featureKey] = feature.plans[plan.id] || {};
+        planData[featureKey] = getFeatureValue(feature, plan.id);
       });
       
       zip.file(`${plan.id}.json`, JSON.stringify(planData, null, 2));
@@ -95,7 +106,7 @@ export const exportSmartJSON = async (
       // Include ALL features for this plan (full feature list)
       features.forEach((feature) => {
         const featureKey = feature.name.toUpperCase().replace(/\s+/g, "_");
-        planData[featureKey] = feature.plans[plan.id] || {};
+        planData[featureKey] = getFeatureValue(feature, plan.id);
       });
       
       zip.file(`${plan.id}.json`, JSON.stringify(planData, null, 2));
