@@ -382,6 +382,51 @@ const PlansTable = () => {
     setShowChangeLogsDialog(true);
   };
 
+  const handleRevertFeature = (featureName: string) => {
+    // Find the original feature by name
+    const originalFeature = originalFeatures.find((f) => f.name === featureName);
+    
+    if (originalFeature) {
+      // Revert to original feature
+      setFeatures((prevFeatures) =>
+        prevFeatures.map((f) =>
+          f.name === featureName ? { ...originalFeature } : f
+        )
+      );
+    } else {
+      // If it's a new feature, remove it
+      setFeatures((prevFeatures) =>
+        prevFeatures.filter((f) => f.name !== featureName)
+      );
+    }
+  };
+
+  const handleRevertPlan = (planId: string) => {
+    // Remove the plan from localPlans
+    setLocalPlans((prevPlans) => prevPlans.filter((p) => p.id !== planId));
+    
+    // Remove from newly added plans
+    setNewlyAddedPlans((prevNewPlans) =>
+      prevNewPlans.filter((id) => id !== planId)
+    );
+    
+    // Remove from visible columns
+    setVisibleColumns((prevColumns) => {
+      const newColumns = { ...prevColumns };
+      delete newColumns[planId];
+      return newColumns;
+    });
+    
+    // Remove plan data from all features
+    setFeatures((prevFeatures) =>
+      prevFeatures.map((feature) => {
+        const newPlans = { ...feature.plans };
+        delete newPlans[planId];
+        return { ...feature, plans: newPlans };
+      })
+    );
+  };
+
   return (
     <div className="w-full space-y-4">
       <Toolbar
@@ -570,6 +615,8 @@ const PlansTable = () => {
         newlyAddedPlans={newlyAddedPlans}
         allPlans={localPlans}
         features={features}
+        onRevertFeature={handleRevertFeature}
+        onRevertPlan={handleRevertPlan}
       />
 
       {/* Add Plan Dialog */}

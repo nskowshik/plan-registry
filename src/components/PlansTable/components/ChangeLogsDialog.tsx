@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Undo2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import JSZip from "jszip";
 import { ChangedFeature } from "../types";
@@ -22,6 +22,8 @@ interface ChangeLogsDialogProps {
   newlyAddedPlans: string[];
   allPlans: Plan[];
   features: Feature[];
+  onRevertFeature?: (featureId: string) => void;
+  onRevertPlan?: (planId: string) => void;
 }
 
 export const ChangeLogsDialog = ({
@@ -31,6 +33,8 @@ export const ChangeLogsDialog = ({
   newlyAddedPlans,
   allPlans,
   features,
+  onRevertFeature,
+  onRevertPlan,
 }: ChangeLogsDialogProps) => {
   const changeLogsContentRef = useRef<HTMLDivElement>(null);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
@@ -210,13 +214,24 @@ export const ChangeLogsDialog = ({
                         className="border rounded-lg p-4 bg-card"
                       >
                         <div className="flex items-center gap-2 mb-3">
-                          <h4 className="font-semibold text-lg">{plan.name}</h4>
+                          <h4 className="font-semibold text-lg flex-1">{plan.name}</h4>
                           <Badge variant="default">NEW PLAN</Badge>
                           {plan.isPopular && (
                             <Badge variant="secondary">Popular</Badge>
                           )}
                           {plan.isActive && (
                             <Badge variant="outline">Active</Badge>
+                          )}
+                          {onRevertPlan && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRevertPlan(planId)}
+                              className="h-8 px-2"
+                            >
+                              <Undo2 className="h-4 w-4 mr-1" />
+                              Revert
+                            </Button>
                           )}
                         </div>
                         <div className="text-sm text-muted-foreground mb-3">
@@ -306,7 +321,7 @@ export const ChangeLogsDialog = ({
                         className="border rounded-lg p-4 bg-card"
                       >
                         <div className="flex items-center gap-2 mb-3">
-                          <h3 className="font-semibold text-lg">
+                          <h3 className="font-semibold text-lg flex-1">
                             {featureName}
                           </h3>
                           <Badge
@@ -320,6 +335,17 @@ export const ChangeLogsDialog = ({
                           >
                             {featureData.status}
                           </Badge>
+                          {onRevertFeature && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRevertFeature(featureName)}
+                              className="h-8 px-2"
+                            >
+                              <Undo2 className="h-4 w-4 mr-1" />
+                              Revert
+                            </Button>
+                          )}
                         </div>
 
                         {featureData.status === "RENAMED" && (
