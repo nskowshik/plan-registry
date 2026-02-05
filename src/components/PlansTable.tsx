@@ -42,13 +42,25 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import html2canvas from "html2canvas";
-import { exportFeaturesToJSON, exportSmartJSON } from "./PlansTable/utils/exportUtils";
+import {
+  exportFeaturesToJSON,
+  exportSmartJSON,
+} from "./PlansTable/utils/exportUtils";
 
 const createEmptyFeature = (id: string): Feature => ({
   id,
@@ -69,8 +81,9 @@ const PlansTable = () => {
     useState<boolean>(false);
   const [showAddFeatureDialog, setShowAddFeatureDialog] =
     useState<boolean>(false);
-  const [showAddPlanDialog, setShowAddPlanDialog] =
-    useState<boolean>(false);
+  const [showAddPlanDialog, setShowAddPlanDialog] = useState<boolean>(false);
+  const [showExportDialog, setShowExportDialog] = useState<boolean>(false);
+  const [exportAllPlans, setExportAllPlans] = useState<boolean>(false);
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
     localPlans.reduce((acc, plan) => {
       const isNFR =
@@ -98,7 +111,10 @@ const PlansTable = () => {
   const toggleAllColumns = () => {
     const allVisible = localPlans.every((plan) => visibleColumns[plan.id]);
     setVisibleColumns(
-      localPlans.reduce((acc, plan) => ({ ...acc, [plan.id]: !allVisible }), {}),
+      localPlans.reduce(
+        (acc, plan) => ({ ...acc, [plan.id]: !allVisible }),
+        {},
+      ),
     );
   };
 
@@ -110,7 +126,13 @@ const PlansTable = () => {
     setShowAddPlanDialog(true);
   };
 
-  const handleCreatePlan = (planId: string, planName: string, isPopular: boolean, isActive: boolean, cloneFromPlanId?: string) => {
+  const handleCreatePlan = (
+    planId: string,
+    planName: string,
+    isPopular: boolean,
+    isActive: boolean,
+    cloneFromPlanId?: string,
+  ) => {
     // Create new plan object
     const newPlan = {
       id: planId,
@@ -121,7 +143,7 @@ const PlansTable = () => {
 
     // Add to local plans array
     setLocalPlans([...localPlans, newPlan]);
-    
+
     // Track as newly added plan
     setNewlyAddedPlans([...newlyAddedPlans, planId]);
 
@@ -144,7 +166,7 @@ const PlansTable = () => {
             },
           };
         }
-        
+
         // Otherwise, use default empty values
         return {
           ...feature,
@@ -159,14 +181,18 @@ const PlansTable = () => {
             },
           },
         };
-      })
+      }),
     );
 
     // Scroll to the new plan column after DOM updates
     setTimeout(() => {
       const planHeader = document.querySelector(`[data-plan-id="${planId}"]`);
       if (planHeader) {
-        planHeader.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        planHeader.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
       }
     }, 100);
   };
@@ -176,53 +202,86 @@ const PlansTable = () => {
 
     // Scroll to the new feature row after DOM updates
     setTimeout(() => {
-      const featureRow = document.querySelector(`[data-feature-id="${newFeature.id}"]`);
+      const featureRow = document.querySelector(
+        `[data-feature-id="${newFeature.id}"]`,
+      );
       if (featureRow) {
-        featureRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        featureRow.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }, 100);
   };
 
   const handleExport = async () => {
-    await exportSmartJSON(features, visiblePlans, changedFeatures, newlyAddedPlans);
+    // Check if there are any new features
+    const hasNewFeatures = Object.values(changedFeatures).some(
+      (change) => change.status === "NEW",
+    );
+
+    // If there are new features, show dialog to choose export option
+    if (hasNewFeatures) {
+      setShowExportDialog(true);
+    } else {
+      // Otherwise, export directly with visible plans
+      await exportSmartJSON(
+        features,
+        visiblePlans,
+        changedFeatures,
+        newlyAddedPlans,
+        localPlans,
+        false,
+      );
+    }
+  };
+
+  const handleConfirmExport = async () => {
+    setShowExportDialog(false);
+    await exportSmartJSON(
+      features,
+      visiblePlans,
+      changedFeatures,
+      newlyAddedPlans,
+      localPlans,
+      exportAllPlans,
+    );
+    setExportAllPlans(false); // Reset checkbox
   };
 
   const handleImport = async (files: FileList) => {
     try {
       const importedPlansData: Record<string, any> = {};
-      
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
-        if (file.name.endsWith('.zip')) {
+
+        if (file.name.endsWith(".zip")) {
           // Handle zip file
           const zip = new JSZip();
           const zipContent = await zip.loadAsync(file);
-          
+
           // Extract all JSON files from zip
           for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
-            if (filename.endsWith('.json') && !zipEntry.dir) {
-              const content = await zipEntry.async('string');
-              const planId = filename.replace('.json', '');
+            if (filename.endsWith(".json") && !zipEntry.dir) {
+              const content = await zipEntry.async("string");
+              const planId = filename.replace(".json", "");
               importedPlansData[planId] = JSON.parse(content);
             }
           }
-        } else if (file.name.endsWith('.json')) {
+        } else if (file.name.endsWith(".json")) {
           // Handle individual JSON file
           const content = await file.text();
-          const planId = file.name.replace('.json', '');
+          const planId = file.name.replace(".json", "");
           importedPlansData[planId] = JSON.parse(content);
         }
       }
-      
+
       // Create plans array from imported data
       const importedPlans = Object.keys(importedPlansData).map((planId) => {
         // Format plan name from ID (e.g., "starter" -> "Starter", "premium-2024" -> "Premium 2024")
         const planName = planId
-          .split('-')
+          .split("-")
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        
+          .join(" ");
+
         return {
           id: planId,
           name: planName,
@@ -230,58 +289,62 @@ const PlansTable = () => {
           isActive: true,
         };
       });
-      
+
       // Process imported data and rebuild features
       const allFeatureKeys = new Set<string>();
       Object.values(importedPlansData).forEach((planData) => {
         Object.keys(planData).forEach((key) => allFeatureKeys.add(key));
       });
-      
+
       // Create new features array
-      const newFeatures: Feature[] = Array.from(allFeatureKeys).map((featureKey) => {
-        const featureName = featureKey
-          .split('_')
-          .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-          .join(' ');
-        
-        const plans: Record<string, any> = {};
-        Object.entries(importedPlansData).forEach(([planId, planData]) => {
-          plans[planId] = planData[featureKey] || {
-            canEnabled: false,
-            canEnabledWithFlag: false,
-            canEnabledInTrial: false,
-            upsellPlanId: null,
-            upsellAddonId: null,
+      const newFeatures: Feature[] = Array.from(allFeatureKeys).map(
+        (featureKey) => {
+          const featureName = featureKey
+            .split("_")
+            .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+            .join(" ");
+
+          const plans: Record<string, any> = {};
+          Object.entries(importedPlansData).forEach(([planId, planData]) => {
+            plans[planId] = planData[featureKey] || {
+              canEnabled: false,
+              canEnabledWithFlag: false,
+              canEnabledInTrial: false,
+              upsellPlanId: null,
+              upsellAddonId: null,
+            };
+          });
+
+          return {
+            id: featureKey.toLowerCase(),
+            name: featureName,
+            plans,
           };
-        });
-        
-        return {
-          id: featureKey.toLowerCase(),
-          name: featureName,
-          plans,
-        };
-      });
-      
+        },
+      );
+
       // Update plans state
       setLocalPlans(importedPlans);
-      
+
       // Update visible columns to show all imported plans
       const newVisibleColumns: Record<string, boolean> = {};
       importedPlans.forEach((plan) => {
         newVisibleColumns[plan.id] = true;
       });
       setVisibleColumns(newVisibleColumns);
-      
+
       // Update features state
       setFeatures(newFeatures);
-      
+
       // Reset newly added plans since we're importing fresh data
       setNewlyAddedPlans([]);
-      
-      alert(`Successfully imported ${Object.keys(importedPlansData).length} plan(s) with ${newFeatures.length} feature(s)`);
+
+      alert(
+        `Successfully imported ${Object.keys(importedPlansData).length} plan(s) with ${newFeatures.length} feature(s)`,
+      );
     } catch (error) {
-      console.error('Import error:', error);
-      alert('Failed to import files. Please ensure they are valid JSON files.');
+      console.error("Import error:", error);
+      alert("Failed to import files. Please ensure they are valid JSON files.");
     }
   };
 
@@ -335,7 +398,9 @@ const PlansTable = () => {
         onExport={handleExport}
         onImport={handleImport}
         onChangeLogs={changeLogs}
-        changedFeaturesCount={Object.keys(changedFeatures).length + newlyAddedPlans.length}
+        changedFeaturesCount={
+          Object.keys(changedFeatures).length + newlyAddedPlans.length
+        }
       />
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="max-h-[calc(100vh-300px)] overflow-auto">
@@ -513,6 +578,53 @@ const PlansTable = () => {
         onOpenChange={setShowAddPlanDialog}
         onCreatePlan={handleCreatePlan}
       />
+
+      {/* Export Options Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Export Options</DialogTitle>
+            <DialogDescription>
+              New features detected. Choose which plans to export.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="export-all-plans"
+                checked={exportAllPlans}
+                onCheckedChange={(checked) =>
+                  setExportAllPlans(checked as boolean)
+                }
+              />
+              <Label
+                htmlFor="export-all-plans"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Export all plans (including hidden plans)
+              </Label>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              {exportAllPlans
+                ? `All ${localPlans.length} plans will be exported`
+                : `Only ${visiblePlans.length} visible plans will be exported`}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowExportDialog(false);
+                setExportAllPlans(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmExport}>Export JSON</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
