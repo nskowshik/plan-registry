@@ -28,7 +28,9 @@ export const exportSmartJSON = async (
   features: Feature[],
   visiblePlans: Plan[],
   changedFeatures: Record<string, ChangedFeature>,
-  newlyAddedPlans: string[]
+  newlyAddedPlans: string[],
+  allPlans: Plan[],
+  exportAllPlans: boolean
 ) => {
   const zip = new JSZip();
   
@@ -37,9 +39,11 @@ export const exportSmartJSON = async (
     (change) => change.status === "NEW"
   );
   
-  // If there are new features, export all plans (full export)
+  // If there are new features, export based on user choice (all plans or visible plans)
   if (hasNewFeatures) {
-    visiblePlans.forEach((plan) => {
+    const plansToExport = exportAllPlans ? allPlans : visiblePlans;
+    
+    plansToExport.forEach((plan) => {
       const planData: Record<string, any> = {};
       
       features.forEach((feature) => {
