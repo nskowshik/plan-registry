@@ -169,7 +169,7 @@ export const Toolbar = ({
           <TooltipTrigger asChild>
             <span>
               <Button
-                onClick={onExport}
+                onClick={onChangeLogs}
                 variant="outline"
                 className="transition-colors"
                 disabled={changedFeaturesCount === 0}

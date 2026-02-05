@@ -647,6 +647,7 @@ const PlansTable = () => {
         features={features}
         onRevertFeature={handleRevertFeature}
         onRevertPlan={handleRevertPlan}
+        onExport={handleExport}
       />
 
       {/* Add Plan Dialog */}
