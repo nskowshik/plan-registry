@@ -76,7 +76,7 @@ const PlansTable = () => {
   const [editingName, setEditingName] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [columnSearchQuery, setColumnSearchQuery] = useState<string>("");
-  const [isEditMode, setIsEditMode] = useState<boolean>(true);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [showChangeLogsDialog, setShowChangeLogsDialog] =
     useState<boolean>(false);
   const [showAddFeatureDialog, setShowAddFeatureDialog] =

@@ -212,7 +212,7 @@ export const Toolbar = ({
         variant="outline"
         className="transition-colors"
       >
-        ✍️ Change log
+        ✍️ Change log {changedFeaturesCount > 0 && `(${changedFeaturesCount})`}
       </Button>
     </div>
   );
