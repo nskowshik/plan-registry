@@ -398,6 +398,13 @@
         "upsellPlanId": null,
         "upsellAddonId": null
     },
+    "ADVANCED_SERVICE_CATALOG": {
+        "canEnabled": false,
+        "canEnabledWithFlag": false,
+        "canEnabledInTrial": false,
+        "upsellPlanId": null,
+        "upsellAddonId": null
+    },
     "SESSION_TIMEOUT": {
         "canEnabled": true,
         "canEnabledWithFlag": false,
