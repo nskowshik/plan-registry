@@ -99,7 +99,10 @@ const PlansTable = () => {
   // Use change tracking hook
   const { changedFeatures } = useChangeTracking(features, originalFeatures);
 
-  const visiblePlans = localPlans.filter((plan) => visibleColumns[plan.id]);
+  const visiblePlans = useMemo(
+    () => localPlans.filter((plan) => visibleColumns[plan.id]),
+    [localPlans, visibleColumns]
+  );
 
   const filteredPlansForConfig = localPlans.filter((plan) =>
     plan.name.toLowerCase().includes(columnSearchQuery.toLowerCase()),
@@ -250,31 +253,37 @@ const PlansTable = () => {
   const handleImport = async (files: FileList) => {
     try {
       const importedPlansData: Record<string, any> = {};
+      
+      // Convert FileList to array to prevent it from becoming invalid during async operations
+      const filesArray = Array.from(files);
+      
+      for (let i = 0; i < filesArray.length; i++) {
+        try {
+          const file = filesArray[i];
+          if (file.name.endsWith(".zip")) {
+            // Handle zip file
+            const zip = new JSZip();
+            const zipContent = await zip.loadAsync(file);
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-
-        if (file.name.endsWith(".zip")) {
-          // Handle zip file
-          const zip = new JSZip();
-          const zipContent = await zip.loadAsync(file);
-
-          // Extract all JSON files from zip
-          for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
-            if (filename.endsWith(".json") && !zipEntry.dir) {
-              const content = await zipEntry.async("string");
-              const planId = filename.replace(".json", "");
-              importedPlansData[planId] = JSON.parse(content);
+            // Extract all JSON files from zip
+            for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
+              if (filename.endsWith(".json") && !zipEntry.dir) {
+                const content = await zipEntry.async("string");
+                const planId = filename.replace(".json", "");
+                importedPlansData[planId] = JSON.parse(content);
+              }
             }
+          } else if (file.name.endsWith(".json")) {
+            // Handle individual JSON file
+            const content = await file.text();
+            const planId = file.name.replace(".json", "");
+            importedPlansData[planId] = JSON.parse(content);
           }
-        } else if (file.name.endsWith(".json")) {
-          // Handle individual JSON file
-          const content = await file.text();
-          const planId = file.name.replace(".json", "");
-          importedPlansData[planId] = JSON.parse(content);
+          
+        } catch (fileError) {
+          console.error(`Error processing file ${i + 1}:`, fileError);
         }
       }
-
       // Create plans array from imported data
       const importedPlans = Object.keys(importedPlansData).map((planId) => {
         // Format plan name from ID (e.g., "starter" -> "Starter", "premium-2024" -> "Premium 2024")
@@ -323,7 +332,7 @@ const PlansTable = () => {
           };
         },
       );
-
+      
       // Update plans state
       setLocalPlans(importedPlans);
 
