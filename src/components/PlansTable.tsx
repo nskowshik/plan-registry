@@ -72,7 +72,7 @@ const PlansTable = () => {
   const [localPlans, setLocalPlans] = useState(plans);
   const [newlyAddedPlans, setNewlyAddedPlans] = useState<string[]>([]);
   const [features, setFeatures] = useState<Feature[]>(initialFeatures);
-  const [originalFeatures] = useState<Feature[]>(initialFeatures);
+  const [originalFeatures, setOriginalFeatures] = useState<Feature[]>(initialFeatures);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [columnSearchQuery, setColumnSearchQuery] = useState<string>("");
@@ -265,12 +265,33 @@ const PlansTable = () => {
             const zip = new JSZip();
             const zipContent = await zip.loadAsync(file);
 
+            const allFiles = Object.keys(zipContent.files);
+
             // Extract all JSON files from zip
-            for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
+            let jsonCount = 0;
+            let skippedCount = 0;
+            const entries = Object.entries(zipContent.files);
+            
+            for (const [filename, zipEntry] of entries) {
+              
+              // Skip __MACOSX files and directories
+              if (filename.includes("__MACOSX") || filename.startsWith("._")) {
+                console.log(`    ⊘ Skipping system file: ${filename}`);
+                skippedCount++;
+                continue;
+              }
+              
               if (filename.endsWith(".json") && !zipEntry.dir) {
-                const content = await zipEntry.async("string");
-                const planId = filename.replace(".json", "");
-                importedPlansData[planId] = JSON.parse(content);
+                try {
+                  const content = await zipEntry.async("string");
+                  // Extract just the filename without path
+                  const baseName = filename.split('/').pop() || filename;
+                  const planId = baseName.replace(".json", "");
+                  importedPlansData[planId] = JSON.parse(content);
+                  jsonCount++;
+                } catch (parseError) {
+                  console.error(`    ✗ Error parsing ${filename}:`, parseError);
+                }
               }
             }
           } else if (file.name.endsWith(".json")) {
@@ -284,6 +305,7 @@ const PlansTable = () => {
           console.error(`Error processing file ${i + 1}:`, fileError);
         }
       }
+      
       // Create plans array from imported data
       const importedPlans = Object.keys(importedPlansData).map((planId) => {
         // Format plan name from ID (e.g., "starter" -> "Starter", "premium-2024" -> "Premium 2024")
@@ -345,6 +367,9 @@ const PlansTable = () => {
 
       // Update features state
       setFeatures(newFeatures);
+
+      // Reset change tracking - set originalFeatures to match imported features
+      setOriginalFeatures(newFeatures);
 
       // Reset newly added plans since we're importing fresh data
       setNewlyAddedPlans([]);
