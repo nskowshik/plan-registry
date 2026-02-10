@@ -571,7 +571,7 @@ const PlansTable = () => {
                   data-feature-id={feature.id}
                   className="table-row-hover transition-colors duration-150"
                 >
-                  <TableCell className="py-3 pl-6 border-r border-border sticky left-0 z-10 bg-card">
+                  <TableCell className="py-3 pl-6 border-r border-border sticky left-0 z-[11] bg-card">
                     {isEditMode ? (
                       editingName === feature.id ? (
                         <Input
