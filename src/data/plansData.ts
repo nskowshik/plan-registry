@@ -10,6 +10,7 @@ export interface Plan {
 export interface SubColumn {
   id: string;
   name: string;
+  tippyContent?: string;
 }
 
 export interface FeatureData {
@@ -96,9 +97,9 @@ export const plans: Plan[] = plansList.sort((a, b) => {
 
 // Sub-columns are the JSON keys (canEnabled, canEnabledWithFlag, etc.)
 export const subColumns: SubColumn[] = [
-  { id: "canEnabled", name: "Enabled" },
-  { id: "canEnabledWithFlag", name: "With Flag" },
-  { id: "canEnabledInTrial", name: "In Trial" },
+  { id: "canEnabled", name: "Enabled" , tippyContent: 'Enabled by default'},
+  { id: "canEnabledWithFlag", name: "Flag enabled" , tippyContent: 'Enabled based on flag condition'},
+  { id: "canEnabledInTrial", name: "In Trial" , tippyContent: 'Enabled for trial user'},
 ];
 
 // Extract all unique feature names from all plan JSONs

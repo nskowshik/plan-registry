@@ -30,6 +30,7 @@ import {
   Edit,
   Eye,
   Settings2,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -558,7 +559,21 @@ const PlansTable = () => {
                           "border-r border-border last:border-r-0",
                       )}
                     >
-                      {subCol.name}
+                      <div className="flex items-center justify-center gap-1">
+                        <span>{subCol.name}</span>
+                        {subCol.tippyContent && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{subCol.tippyContent}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                     </TableHead>
                   )),
                 )}
