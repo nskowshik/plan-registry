@@ -179,9 +179,13 @@ export const Toolbar = ({
               </Button>
             </span>
           </TooltipTrigger>
-          {changedFeaturesCount === 0 && (
+          {changedFeaturesCount === 0 ? (
             <TooltipContent>
               <p>No changes to export</p>
+            </TooltipContent>
+          ) : (
+            <TooltipContent>
+              <p>Export all plans as gating JSON</p>
             </TooltipContent>
           )}
         </Tooltip>
